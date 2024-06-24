@@ -1,0 +1,332 @@
+import { Signal, WritableSignal, signal } from '@angular/core';
+import {
+  FormControlProps,
+  FormGroupProps,
+  FormState,
+  SubscriberControl,
+  ValidatorGroupFn,
+  createFormControlProps,
+  createFormGroupProps
+} from '@rolster/helpers-forms';
+import {
+  controlIsValid,
+  controlsAllChecked,
+  controlsPartialChecked,
+  groupIsValid
+} from '@rolster/helpers-forms/helpers';
+import { ValidatorError, ValidatorFn } from '@rolster/validators';
+import { BehaviorSubject } from 'rxjs';
+import { AngularControl, AngularControls, AngularGroup } from './types-angular';
+
+export class BaseFormControl<
+  T = any,
+  C extends AngularControls = AngularControls
+> implements AngularControl<T, C>
+{
+  private currentFocused = false;
+
+  private currentTouched = false;
+
+  private currentDirty = false;
+
+  private currentDisabled = false;
+
+  private currentValid = true;
+
+  private initialState: FormState<T>;
+
+  private currentSignal: WritableSignal<FormState<T>>;
+
+  private currentError?: ValidatorError;
+
+  private currentErrors: ValidatorError[] = [];
+
+  private validators?: ValidatorFn<T>[];
+
+  private subscribers: BehaviorSubject<FormState<T>>;
+
+  private currentParent?: AngularGroup<C>;
+
+  constructor();
+  constructor(props: FormControlProps<T>);
+  constructor(state: FormState<T>, validators?: ValidatorFn<T>[]);
+  constructor(
+    controlProps?: FormControlProps<T> | FormState<T>,
+    controlValidators?: ValidatorFn<T>[]
+  ) {
+    const { state, validators } = createFormControlProps(
+      controlProps,
+      controlValidators
+    );
+
+    this.subscribers = new BehaviorSubject(state);
+
+    this.initialState = state;
+    this.validators = validators;
+
+    this.currentSignal = signal(state);
+    this.updateValueAndValidity();
+  }
+
+  public get signal(): Signal<FormState<T>> {
+    return this.currentSignal;
+  }
+
+  public get focused(): boolean {
+    return this.currentFocused;
+  }
+
+  public get unfocused(): boolean {
+    return !this.currentFocused;
+  }
+
+  public get touched(): boolean {
+    return this.currentTouched;
+  }
+
+  public get untouched(): boolean {
+    return !this.currentTouched;
+  }
+
+  public get dirty(): boolean {
+    return this.currentDirty;
+  }
+
+  public get pristine(): boolean {
+    return !this.currentDirty;
+  }
+
+  public get disabled(): boolean {
+    return this.currentDisabled;
+  }
+
+  public get enabled(): boolean {
+    return !this.currentDisabled;
+  }
+
+  public get valid(): boolean {
+    return this.currentValid;
+  }
+
+  public get invalid(): boolean {
+    return !this.currentValid;
+  }
+
+  public get state(): FormState<T> {
+    return this.currentSignal();
+  }
+
+  public get value(): T {
+    return this.currentSignal as T;
+  }
+
+  public get errors(): ValidatorError[] {
+    return this.currentErrors;
+  }
+
+  public get error(): ValidatorError | undefined {
+    return this.currentError;
+  }
+
+  public get wrong(): boolean {
+    return this.touched && this.invalid;
+  }
+
+  public reset(): void {
+    this.setState(this.initialState);
+    this.untouch();
+    this.currentDirty = false;
+  }
+
+  public focus(): void {
+    this.currentFocused = true;
+  }
+
+  public blur(): void {
+    this.currentFocused = false;
+  }
+
+  public touch(): void {
+    this.currentTouched = true;
+  }
+
+  public untouch(): void {
+    this.currentTouched = false;
+  }
+
+  public disable(): void {
+    this.currentDisabled = true;
+  }
+
+  public enable(): void {
+    this.currentDisabled = false;
+  }
+
+  public setState(state?: FormState<T>): void {
+    this.currentSignal.set(state);
+    this.currentDirty = true;
+
+    this.updateValueAndValidity();
+    this.currentParent?.updateValueAndValidity(false);
+
+    this.subscribers.next(state);
+  }
+
+  public setValidators(validators: ValidatorFn<T>[] = []): void {
+    this.validators = validators;
+    this.updateValueAndValidity();
+  }
+
+  public setParent(parent: AngularGroup<C>): void {
+    this.currentParent = parent;
+  }
+
+  public subscribe(subscriber: SubscriberControl<T>): Unsubscription {
+    const subscription = this.subscribers.subscribe(subscriber);
+
+    return () => subscription.unsubscribe();
+  }
+
+  public updateValueAndValidity(): void {
+    if (this.validators) {
+      const { currentSignal: state, validators } = this;
+
+      const errors = controlIsValid({ state: state(), validators });
+
+      this.currentError = errors[0];
+      this.currentErrors = errors;
+
+      this.currentValid = errors.length === 0;
+    } else {
+      this.currentValid = true;
+      this.currentError = undefined;
+      this.currentErrors = [];
+    }
+  }
+}
+
+export class BaseFormGroup<
+  C extends AngularControls<AngularControl> = AngularControls<AngularControl>
+> implements AngularGroup<C>
+{
+  protected currentControls: C;
+
+  private currentError?: ValidatorError;
+
+  private currentErrors: ValidatorError[] = [];
+
+  private currentValid = true;
+
+  private validators?: ValidatorGroupFn<C>[];
+
+  constructor(props: FormGroupProps<C>);
+  constructor(controls: C, validators?: ValidatorGroupFn<C>[]);
+  constructor(
+    groupProps: FormGroupProps<C> | C,
+    groupValidators?: ValidatorGroupFn<C>[]
+  ) {
+    const { controls, validators } = createFormGroupProps(
+      groupProps,
+      groupValidators
+    );
+
+    this.currentControls = controls;
+
+    Object.values(this.currentControls).forEach((control) => {
+      control.setParent(this);
+    });
+
+    this.validators = validators;
+
+    this.updateValueAndValidity(false);
+  }
+
+  public get controls(): C {
+    return this.currentControls;
+  }
+
+  public get touched(): boolean {
+    return controlsPartialChecked(this.currentControls, 'touched');
+  }
+
+  public get toucheds(): boolean {
+    return controlsAllChecked(this.currentControls, 'touched');
+  }
+
+  public get untouched(): boolean {
+    return !this.touched;
+  }
+
+  public get untoucheds(): boolean {
+    return !this.toucheds;
+  }
+
+  public get dirty(): boolean {
+    return controlsPartialChecked(this.currentControls, 'dirty');
+  }
+
+  public get dirties(): boolean {
+    return controlsAllChecked(this.currentControls, 'dirty');
+  }
+
+  public get pristine(): boolean {
+    return !this.dirty;
+  }
+
+  public get pristines(): boolean {
+    return this.dirties;
+  }
+
+  public get valid(): boolean {
+    return (
+      this.currentValid && controlsAllChecked(this.currentControls, 'valid')
+    );
+  }
+
+  public get invalid(): boolean {
+    return !this.valid;
+  }
+
+  public get errors(): ValidatorError[] {
+    return this.currentErrors;
+  }
+
+  public get error(): ValidatorError | undefined {
+    return this.currentError;
+  }
+
+  public get wrong(): boolean {
+    return this.touched && this.invalid;
+  }
+
+  public reset(): void {
+    Object.values(this.currentControls).forEach((control) => control.reset());
+  }
+
+  public setValidators(validators: ValidatorGroupFn<C>[]): void {
+    this.validators = validators;
+    this.updateValueAndValidity();
+  }
+
+  public updateValueAndValidity(controls = true): void {
+    if (controls) {
+      Object.values(this.currentControls).forEach((control) => {
+        control.updateValueAndValidity();
+      });
+    }
+
+    if (this.validators) {
+      const { controls, validators } = this;
+
+      const errors = groupIsValid({ controls, validators });
+
+      this.currentErrors = errors;
+      this.currentError = errors[0];
+      this.currentValid = errors.length === 0;
+    } else {
+      this.currentErrors = [];
+      this.currentError = undefined;
+      this.currentValid = true;
+    }
+  }
+}
