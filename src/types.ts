@@ -1,7 +1,7 @@
 import { Signal } from '@angular/core';
-import { AbstractArrayControl, AbstractControl } from '@rolster/forms';
+import { AbstractArrayControl, AbstractReactiveControl } from '@rolster/forms';
 
-export interface AngularControl<T = any> extends AbstractControl<T> {
+export interface AngularControl<T = any> extends AbstractReactiveControl<T> {
   readonly signal: Signal<T>;
 }
 
