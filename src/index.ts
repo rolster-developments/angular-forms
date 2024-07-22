@@ -2,8 +2,11 @@ export {
   FormArray,
   FormArrayControl,
   FormArrayControls,
-  FormArrayGroup
+  FormArrayGroup,
+  formArray,
+  formArrayControl,
+  formArrayGroup
 } from './form-array';
-export { FormControl } from './form-control';
-export { FormControls, FormGroup } from './form-group';
+export { FormControl, formControl } from './form-control';
+export { FormControls, FormGroup, formGroup } from './form-group';
 export { AngularArrayControl, AngularControl } from './types';
