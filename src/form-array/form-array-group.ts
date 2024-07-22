@@ -1,72 +1,48 @@
 import {
-  ArrayStateGroup,
-  ArrayValueGroup,
+  AbstractArrayGroup,
+  AbstractControls,
   FormArrayGroupProps,
   ValidatorGroupFn,
   createFormGroupProps
-} from '@rolster/helpers-forms';
-import {
-  controlsToState,
-  controlsToValue
-} from '@rolster/helpers-forms/helpers';
+} from '@rolster/forms';
 import { v4 as uuid } from 'uuid';
-import { BaseFormGroup } from '../implementations';
-import {
-  AngularFormArray,
-  AngularFormArrayControls,
-  AngularFormArrayGroup
-} from '../types-angular';
+import { FormGroup } from '../form-group';
+import { AngularArrayControl } from '../types';
 
-type AngularArrayGroupProps<T extends AngularFormArrayControls> = Omit<
+export type FormArrayControls<
+  T extends AngularArrayControl = AngularArrayControl
+> = AbstractControls<T>;
+
+type ArrayGroupProps<T extends FormArrayControls> = Omit<
   FormArrayGroupProps<T>,
   'uuid'
 >;
 
 export class FormArrayGroup<
-    C extends AngularFormArrayControls = AngularFormArrayControls,
+    C extends FormArrayControls = FormArrayControls,
     R = any
   >
-  extends BaseFormGroup<C>
-  implements AngularFormArrayGroup<C>
+  extends FormGroup<C>
+  implements AbstractArrayGroup<C>
 {
   public readonly uuid: string;
 
   public readonly resource?: R;
 
-  private currentParent?: AngularFormArray<C>;
-
   constructor(controls: C, validators?: ValidatorGroupFn<C>[]);
-  constructor(props: AngularArrayGroupProps<C>);
+  constructor(props: ArrayGroupProps<C>);
   constructor(
-    groupProps: AngularArrayGroupProps<C> | C,
+    groupProps: ArrayGroupProps<C> | C,
     groupValidators?: ValidatorGroupFn<C>[]
   ) {
     const { controls, resource, validators } = createFormGroupProps<
       C,
-      AngularArrayGroupProps<C>
+      ArrayGroupProps<C>
     >(groupProps, groupValidators);
 
     super(controls, validators);
 
     this.uuid = uuid();
     this.resource = resource;
-  }
-
-  public setParent(parent: AngularFormArray<C>): void {
-    this.currentParent = parent;
-  }
-
-  public updateValueAndValidity(controls?: boolean): void {
-    super.updateValueAndValidity(controls);
-
-    this.currentParent?.updateValueAndValidity(false);
-  }
-
-  public get state(): ArrayStateGroup<C> {
-    return controlsToState(this.currentControls);
-  }
-
-  public get value(): ArrayValueGroup<C> {
-    return controlsToValue(this.currentControls);
   }
 }

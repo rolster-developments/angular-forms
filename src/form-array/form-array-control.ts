@@ -1,35 +1,31 @@
 import {
-  AbstractArrayControl,
   FormArrayControlProps,
   FormState,
   createFormControlProps
-} from '@rolster/helpers-forms';
+} from '@rolster/forms';
 import { ValidatorFn } from '@rolster/validators';
 import { v4 as uuid } from 'uuid';
-import { BaseFormControl } from '../implementations';
-import { AngularFormArrayControls } from '../types-angular';
+import { FormControl } from '../form-control';
+import { AngularArrayControl } from '../types';
 
-type AngularArrayControlProps<T> = Omit<FormArrayControlProps<T>, 'uuid'>;
+type AngularControlProps<T> = Omit<FormArrayControlProps<T>, 'uuid'>;
 
 export class FormArrayControl<T = any>
-  extends BaseFormControl<T, AngularFormArrayControls>
-  implements AbstractArrayControl<T>
+  extends FormControl<T>
+  implements AngularArrayControl<T>
 {
   public readonly uuid: string;
 
   constructor();
-  constructor(props: AngularArrayControlProps<T>);
+  constructor(props: AngularControlProps<T>);
   constructor(state: FormState<T>, validators?: ValidatorFn<T>[]);
   constructor(
-    controlProps?: AngularArrayControlProps<T> | FormState<T>,
+    controlProps?: AngularControlProps<T> | FormState<T>,
     controlValidators?: ValidatorFn<T>[]
   ) {
-    const { state, validators } = createFormControlProps(
-      controlProps,
-      controlValidators
-    );
+    const props = createFormControlProps(controlProps, controlValidators);
 
-    super(state, validators);
+    super(props);
 
     this.uuid = uuid();
   }
