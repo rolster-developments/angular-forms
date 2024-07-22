@@ -1,10 +1,10 @@
 import { Signal, WritableSignal, signal } from '@angular/core';
 import {
   FormControl as RolsterFormControl,
-  FormControlProps,
-  FormStateProps,
-  FormValidatorsProps,
-  createFormControlProps
+  FormControlOptions,
+  FormStateOptions,
+  FormValidatorsOptions,
+  createFormControlOptions
 } from '@rolster/forms';
 import { ValidatorFn } from '@rolster/validators';
 import { AngularControl } from './types';
@@ -16,17 +16,17 @@ export class FormControl<T = any>
   private currentSignal: WritableSignal<T>;
 
   constructor();
-  constructor(props: FormControlProps<T>);
+  constructor(options: FormControlOptions<T>);
   constructor(state: T, validators?: ValidatorFn<T>[]);
   constructor(
-    controlProps?: FormControlProps<T> | T,
+    controlOptions?: FormControlOptions<T> | T,
     controlValidators?: ValidatorFn<T>[]
   ) {
-    const props = createFormControlProps(controlProps, controlValidators);
+    const options = createFormControlOptions(controlOptions, controlValidators);
 
-    super(props);
+    super(options);
 
-    this.currentSignal = signal(props.state);
+    this.currentSignal = signal(options.state);
   }
 
   public get signal(): Signal<T> {
@@ -40,17 +40,17 @@ export class FormControl<T = any>
 }
 
 export function formControl<T>(): FormControl<T | undefined>;
-export function formControl<T>(props: FormStateProps<T>): FormControl<T>;
+export function formControl<T>(options: FormStateOptions<T>): FormControl<T>;
 export function formControl<T>(
-  props: FormValidatorsProps<T>
+  options: FormValidatorsOptions<T>
 ): FormControl<T | undefined>;
 export function formControl<T>(
   state: T,
   validators?: ValidatorFn<T>[]
 ): FormControl<T>;
 export function formControl<T>(
-  props?: FormControlProps<T> | T,
+  options?: FormControlOptions<T> | T,
   validators?: ValidatorFn<T>[]
 ): FormControl<T> {
-  return new FormControl(createFormControlProps(props, validators));
+  return new FormControl(createFormControlOptions(options, validators));
 }

@@ -1,9 +1,9 @@
 import {
   AbstractControls,
   FormGroup as RolsterFormGroup,
-  FormGroupProps,
+  FormGroupOptions,
   ValidatorGroupFn,
-  createFormGroupProps
+  createFormGroupOptions
 } from '@rolster/forms';
 import { AngularControl } from './types';
 
@@ -15,15 +15,15 @@ export class FormGroup<
 > extends RolsterFormGroup<C> {}
 
 export function formGroup<C extends FormControls = FormControls>(
-  props: FormGroupProps<C>
+  props: FormGroupOptions<C>
 ): FormGroup<C>;
 export function formGroup<C extends FormControls = FormControls>(
   controls: C,
   validators?: ValidatorGroupFn<C>[]
 ): FormGroup<C>;
 export function formGroup<C extends FormControls = FormControls>(
-  groupProps: FormGroupProps<C> | C,
-  groupValidators?: ValidatorGroupFn<C>[]
+  options: FormGroupOptions<C> | C,
+  validators?: ValidatorGroupFn<C>[]
 ): FormGroup<C> {
-  return new FormGroup(createFormGroupProps(groupProps, groupValidators));
+  return new FormGroup(createFormGroupOptions(options, validators));
 }

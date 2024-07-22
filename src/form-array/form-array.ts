@@ -2,16 +2,16 @@ import {
   AbstractArrayGroup,
   AbstractControls,
   FormArray as RolsterFormArray,
-  FormArrayProps,
+  FormArrayOptions,
   ValidatorArrayFn,
-  createFormArrayProps
+  createFormArrayOptions
 } from '@rolster/forms';
 import { AngularArrayControl } from '../types';
 
 type FormControls<T extends AngularArrayControl = AngularArrayControl> =
   AbstractControls<T>;
 
-type ArrayProps<G extends FormControls, R> = FormArrayProps<
+type ArrayOptions<G extends FormControls, R> = FormArrayOptions<
   G,
   R,
   AbstractArrayGroup<G, R>
@@ -26,17 +26,16 @@ export function formArray<
   G extends FormControls = FormControls,
   R = any
 >(): FormArray<G, R>;
-
 export function formArray<G extends FormControls = FormControls, R = any>(
-  props: ArrayProps<G, R>
+  options: ArrayOptions<G, R>
 ): FormArray<G, R>;
 export function formArray<G extends FormControls = FormControls, R = any>(
   groups: AbstractArrayGroup<G, R>[],
   validators?: ValidatorArrayFn<G, R>[]
 ): FormArray<G, R>;
 export function formArray<G extends FormControls = FormControls, R = any>(
-  arrayProps?: ArrayProps<G, R> | AbstractArrayGroup<G, R>[],
-  arrayValidators?: ValidatorArrayFn<G, R>[]
+  options?: ArrayOptions<G, R> | AbstractArrayGroup<G, R>[],
+  validators?: ValidatorArrayFn<G, R>[]
 ): FormArray<G, R> {
-  return new FormArray(createFormArrayProps(arrayProps, arrayValidators));
+  return new FormArray(createFormArrayOptions(options, validators));
 }
