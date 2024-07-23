@@ -3,9 +3,9 @@ import {
   AbstractControls,
   FormArray as RolsterFormArray,
   FormArrayOptions,
-  ValidatorArrayFn,
-  createFormArrayOptions
+  ValidatorArrayFn
 } from '@rolster/forms';
+import { createFormArrayOptions } from '@rolster/forms/arguments';
 import { AngularArrayControl } from '../types';
 
 type FormControls<T extends AngularArrayControl = AngularArrayControl> =

@@ -2,9 +2,9 @@ import {
   AbstractControls,
   FormGroup as RolsterFormGroup,
   FormGroupOptions,
-  ValidatorGroupFn,
-  createFormGroupOptions
+  ValidatorGroupFn
 } from '@rolster/forms';
+import { createFormGroupOptions } from '@rolster/forms/arguments';
 import { AngularControl } from './types';
 
 export type FormControls<T extends AngularControl = AngularControl> =

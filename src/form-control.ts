@@ -3,9 +3,9 @@ import {
   FormControl as RolsterFormControl,
   FormControlOptions,
   FormStateOptions,
-  FormValidatorsOptions,
-  createFormControlOptions
+  FormValidatorsOptions
 } from '@rolster/forms';
+import { createFormControlOptions } from '@rolster/forms/arguments';
 import { ValidatorFn } from '@rolster/validators';
 import { AngularControl } from './types';
 

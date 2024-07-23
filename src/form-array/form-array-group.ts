@@ -2,9 +2,9 @@ import {
   AbstractArrayGroup,
   AbstractControls,
   FormArrayGroupOptions,
-  ValidatorGroupFn,
-  createFormGroupOptions
+  ValidatorGroupFn
 } from '@rolster/forms';
+import { createFormGroupOptions } from '@rolster/forms/arguments';
 import { v4 as uuid } from 'uuid';
 import { FormGroup } from '../form-group';
 import { AngularArrayControl } from '../types';

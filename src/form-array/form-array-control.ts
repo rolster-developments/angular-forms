@@ -1,7 +1,5 @@
-import {
-  FormArrayControlOptions,
-  createFormControlOptions
-} from '@rolster/forms';
+import { FormArrayControlOptions } from '@rolster/forms';
+import { createFormControlOptions } from '@rolster/forms/arguments';
 import { ValidatorFn } from '@rolster/validators';
 import { v4 as uuid } from 'uuid';
 import { FormControl } from '../form-control';
