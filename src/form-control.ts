@@ -20,22 +20,22 @@ export class FormControl<T = any>
   constructor(state: T, validators?: ValidatorFn<T>[]);
   constructor(
     controlOptions?: FormControlOptions<T> | T,
-    controlValidators?: ValidatorFn<T>[]
+    validators?: ValidatorFn<T>[]
   ) {
-    const options = createFormControlOptions(controlOptions, controlValidators);
+    const options = createFormControlOptions(controlOptions, validators);
 
     super(options);
 
-    this.currentSignal = signal(options.state);
+    this.currentSignal = signal(options.value);
   }
 
   public get signal(): Signal<T> {
     return this.currentSignal;
   }
 
-  public setState(state: T): void {
+  public setValue(state: T): void {
     this.currentSignal.set(state);
-    super.setState(state);
+    super.setValue(state);
   }
 }
 

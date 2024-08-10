@@ -18,9 +18,9 @@ export class FormArrayControl<T = any>
   constructor(state: T, validators?: ValidatorFn<T>[]);
   constructor(
     controlOptions?: AngularControlOptions<T> | T,
-    controlValidators?: ValidatorFn<T>[]
+    validators?: ValidatorFn<T>[]
   ) {
-    const options = createFormControlOptions(controlOptions, controlValidators);
+    const options = createFormControlOptions(controlOptions, validators);
 
     super(options);
 
