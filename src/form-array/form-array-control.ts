@@ -28,6 +28,8 @@ export class FormArrayControl<T = any>
   }
 }
 
+export type FormArrayControlEmpty<T = any> = FormArrayControl<T | undefined>;
+
 type ArrayStateOptions<T> = Omit<AngularControlOptions<T>, 'validators'>;
 type ArrayValidatorsOptions<T> = Omit<AngularControlOptions<T>, 'state'>;
 

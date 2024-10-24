@@ -39,6 +39,8 @@ export class FormControl<T = any>
   }
 }
 
+export type FormControlEmpty<T = any> = FormControl<T | undefined>;
+
 export function formControl<T>(): FormControl<T | undefined>;
 export function formControl<T>(options: FormStateOptions<T>): FormControl<T>;
 export function formControl<T>(
