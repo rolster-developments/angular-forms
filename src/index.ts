@@ -9,4 +9,9 @@ export {
 } from './form-array';
 export { FormControl, formControl } from './form-control';
 export { FormControls, FormGroup, formGroup } from './form-group';
-export { AngularArrayControl, AngularControl } from './types';
+export {
+  AngularArrayControl,
+  AngularArrayControlEmpty,
+  AngularControl,
+  AngularControlEmpty
+} from './types';
