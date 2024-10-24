@@ -6,6 +6,7 @@ export default rolster({
   packages: [
     '@angular/core',
     '@rolster/forms',
+    '@rolster/forms/arguments',
     '@rolster/forms/helpers',
     '@rolster/validators',
     'uuid'
