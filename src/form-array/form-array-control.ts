@@ -28,20 +28,27 @@ export class FormArrayControl<T = any>
   }
 }
 
-export type FormArrayControlEmpty<T = any> = FormArrayControl<T | undefined>;
+export type FormArrayVoid<T = any> = FormArrayControl<T | undefined>;
 
-type ArrayStateOptions<T> = Omit<AngularControlOptions<T>, 'validators'>;
-type ArrayValidatorsOptions<T> = Omit<AngularControlOptions<T>, 'state'>;
+type ArrayValueOptions<T> = Omit<AngularControlOptions<T>, 'validators'>;
+type ArrayValidatorsOptions<T> = Omit<AngularControlOptions<T>, 'value'>;
 
 export function formArrayControl<T>(): FormArrayControl<T | undefined>;
 export function formArrayControl<T>(
-  options: ArrayStateOptions<T>
+  options: ArrayValueOptions<T>
 ): FormArrayControl<T>;
 export function formArrayControl<T>(
   options: ArrayValidatorsOptions<T>
 ): FormArrayControl<T | undefined>;
 export function formArrayControl<T>(
-  state: T,
+  options: AngularControlOptions<T>
+): FormArrayControl<T>;
+export function formArrayControl<T>(
+  value: undefined,
+  validators?: ValidatorFn<T>[]
+): FormArrayControl<T | undefined>;
+export function formArrayControl<T>(
+  value: T,
   validators?: ValidatorFn<T>[]
 ): FormArrayControl<T>;
 export function formArrayControl<T>(

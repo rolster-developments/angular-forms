@@ -2,8 +2,8 @@ import { Signal, WritableSignal, signal } from '@angular/core';
 import {
   FormControl as RolsterFormControl,
   FormControlOptions,
-  FormStateOptions,
-  FormValidatorsOptions
+  FormValidatorsOptions,
+  FormValueOptions
 } from '@rolster/forms';
 import { createFormControlOptions } from '@rolster/forms/arguments';
 import { ValidatorFn } from '@rolster/validators';
@@ -33,21 +33,26 @@ export class FormControl<T = any>
     return this.currentSignal;
   }
 
-  public setValue(state: T): void {
-    this.currentSignal.set(state);
-    super.setValue(state);
+  public setValue(value: T): void {
+    this.currentSignal.set(value);
+    super.setValue(value);
   }
 }
 
-export type FormControlEmpty<T = any> = FormControl<T | undefined>;
+export type FormVoid<T = any> = FormControl<T | undefined>;
 
 export function formControl<T>(): FormControl<T | undefined>;
-export function formControl<T>(options: FormStateOptions<T>): FormControl<T>;
+export function formControl<T>(options: FormValueOptions<T>): FormControl<T>;
 export function formControl<T>(
   options: FormValidatorsOptions<T>
 ): FormControl<T | undefined>;
+export function formControl<T>(options: FormControlOptions<T>): FormControl<T>;
 export function formControl<T>(
-  state: T,
+  value: undefined,
+  validators?: ValidatorFn<T>[]
+): FormControl<T | undefined>;
+export function formControl<T>(
+  value: T,
   validators?: ValidatorFn<T>[]
 ): FormControl<T>;
 export function formControl<T>(
