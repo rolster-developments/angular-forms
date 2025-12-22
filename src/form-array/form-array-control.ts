@@ -14,15 +14,15 @@ export class FormArrayControl<T = any>
   public readonly uuid: string;
 
   constructor();
-  constructor(props: AngularControlOptions<T>);
+  constructor(options: AngularControlOptions<T>);
   constructor(state: T, validators?: ValidatorFn<T>[]);
   constructor(
-    controlOptions?: AngularControlOptions<T> | T,
+    options?: AngularControlOptions<T> | T,
     validators?: ValidatorFn<T>[]
   ) {
-    const options = createFormControlOptions(controlOptions, validators);
+    const formControl = createFormControlOptions(options, validators);
 
-    super(options);
+    super(formControl);
 
     this.uuid = uuid();
   }

@@ -19,14 +19,14 @@ export class FormControl<T = any>
   constructor(options: FormControlOptions<T>);
   constructor(state: T, validators?: ValidatorFn<T>[]);
   constructor(
-    controlOptions?: FormControlOptions<T> | T,
+    options?: FormControlOptions<T> | T,
     validators?: ValidatorFn<T>[]
   ) {
-    const options = createFormControlOptions(controlOptions, validators);
+    const formControl = createFormControlOptions(options, validators);
 
-    super(options);
+    super(formControl);
 
-    this.currentSignal = signal(options.value);
+    this.currentSignal = signal(formControl.value);
   }
 
   public get signal(): Signal<T> {
