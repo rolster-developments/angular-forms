@@ -1,41 +1,50 @@
-import { Signal, WritableSignal, signal } from '@angular/core';
+import { computed, signal } from '@angular/core';
 import {
-  FormControl as RolsterFormControl,
   FormControlOptions,
   FormValidatorsOptions,
   FormValueOptions
 } from '@rolster/forms';
 import { createFormControlOptions } from '@rolster/forms/arguments';
-import { ValidatorFn } from '@rolster/validators';
-import { AngularControl } from './types';
+import { ValidatorError, ValidatorFn } from '@rolster/validators';
+import { FormSignalControl } from './form-signal-control';
 
-export class FormControl<T = any>
-  extends RolsterFormControl<T>
-  implements AngularControl<T>
-{
-  private currentSignal: WritableSignal<T>;
-
+export class FormControl<T = any> extends FormSignalControl<T> {
   constructor();
   constructor(options: FormControlOptions<T>);
-  constructor(state: T, validators?: ValidatorFn<T>[]);
+  constructor(value: T, validators?: ValidatorFn<T>[]);
   constructor(
     options?: FormControlOptions<T> | T,
     validators?: ValidatorFn<T>[]
   ) {
     const formControl = createFormControlOptions(options, validators);
 
-    super(formControl);
+    const focused = signal(false);
+    const touched = signal(false);
+    const dirty = signal(false);
+    const disabled = signal(false);
+    const valid = signal(true);
+    const errors = signal<ValidatorError[]>([]);
 
-    this.currentSignal = signal(formControl.value);
-  }
-
-  public get signal(): Signal<T> {
-    return this.currentSignal;
-  }
-
-  public setValue(value: T): void {
-    this.currentSignal.set(value);
-    super.setValue(value);
+    super(
+      formControl.value,
+      {
+        dirty,
+        disabled,
+        enabled: computed(() => !disabled()),
+        error: computed(() => errors()[0]),
+        errors,
+        focused,
+        invalid: computed(() => !valid()),
+        pristine: computed(() => !dirty()),
+        touched,
+        unfocused: computed(() => !focused()),
+        untouched: computed(() => !touched()),
+        valid,
+        value: signal(formControl.value),
+        wrong: computed(() => touched() && !valid())
+      },
+      formControl.validators
+    );
   }
 }
 

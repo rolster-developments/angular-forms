@@ -1,29 +1,38 @@
+import { createFormGroupOptions } from './helpers';
 import {
-  AbstractControls,
-  FormGroup as RolsterFormGroup,
-  FormGroupOptions,
+  AbstractAngularFormGroup,
+  AngularFormControls,
+  AngularFormGroupOptions,
   ValidatorGroupFn
-} from '@rolster/forms';
-import { createFormGroupOptions } from '@rolster/forms/arguments';
-import { AngularControl } from './types';
+} from './types';
 
-export type FormControls<T extends AngularControl = AngularControl> =
-  AbstractControls<T>;
+export class FormGroup<C extends AngularFormControls = AngularFormControls>
+  implements AbstractAngularFormGroup<C>
+{
+  private validators?: ValidatorGroupFn<C>[];
 
-export class FormGroup<
-  C extends FormControls = FormControls
-> extends RolsterFormGroup<C> {}
+  constructor(options: AngularFormGroupOptions<C>);
+  constructor(controls: C, validators?: ValidatorGroupFn<C>[]);
+  constructor(
+    options: AngularFormGroupOptions<C> | C,
+    validators?: ValidatorGroupFn<C>[]
+  ) {
+    const formGroup = createFormGroupOptions(options, validators);
 
-export function formGroup<C extends FormControls = FormControls>(
-  props: FormGroupOptions<C>
-): FormGroup<C>;
-export function formGroup<C extends FormControls = FormControls>(
-  controls: C,
-  validators?: ValidatorGroupFn<C>[]
-): FormGroup<C>;
-export function formGroup<C extends FormControls = FormControls>(
-  options: FormGroupOptions<C> | C,
-  validators?: ValidatorGroupFn<C>[]
-): FormGroup<C> {
-  return new FormGroup(createFormGroupOptions(options, validators));
+    this.validators = formGroup.validators;
+  }
 }
+
+// export function formGroup<C extends AngularFormControls = AngularFormControls>(
+//   props: FormGroupOptions<C>
+// ): FormGroup<C>;
+// export function formGroup<C extends AngularFormControls = AngularFormControls>(
+//   controls: C,
+//   validators?: ValidatorGroupFn<C>[]
+// ): FormGroup<C>;
+// export function formGroup<C extends AngularFormControls = AngularFormControls>(
+//   options: FormGroupOptions<C> | C,
+//   validators?: ValidatorGroupFn<C>[]
+// ): FormGroup<C> {
+//   return new FormGroup(createFormGroupOptions(options, validators));
+// }

@@ -2,10 +2,10 @@ import { FormArrayControlOptions } from '@rolster/forms';
 import { createFormControlOptions } from '@rolster/forms/arguments';
 import { ValidatorFn } from '@rolster/validators';
 import { v4 as uuid } from 'uuid';
-import { FormControl } from '../form-control';
+import { FormControl } from '../form-control/form-control';
 import { AngularArrayControl } from '../types';
 
-type AngularControlOptions<T> = Omit<FormArrayControlOptions<T>, 'uuid'>;
+type AngularArrayControlOptions<T> = Omit<FormArrayControlOptions<T>, 'uuid'>;
 
 export class FormArrayControl<T = any>
   extends FormControl<T>
@@ -14,10 +14,10 @@ export class FormArrayControl<T = any>
   public readonly uuid: string;
 
   constructor();
-  constructor(options: AngularControlOptions<T>);
+  constructor(options: AngularArrayControlOptions<T>);
   constructor(state: T, validators?: ValidatorFn<T>[]);
   constructor(
-    options?: AngularControlOptions<T> | T,
+    options?: AngularArrayControlOptions<T> | T,
     validators?: ValidatorFn<T>[]
   ) {
     const formControl = createFormControlOptions(options, validators);
@@ -30,8 +30,8 @@ export class FormArrayControl<T = any>
 
 export type FormArrayVoid<T = any> = FormArrayControl<T | undefined>;
 
-type ArrayValueOptions<T> = Omit<AngularControlOptions<T>, 'validators'>;
-type ArrayValidatorsOptions<T> = Omit<AngularControlOptions<T>, 'value'>;
+type ArrayValueOptions<T> = Omit<AngularArrayControlOptions<T>, 'validators'>;
+type ArrayValidatorsOptions<T> = Omit<AngularArrayControlOptions<T>, 'value'>;
 
 export function formArrayControl<T>(): FormArrayControl<T | undefined>;
 export function formArrayControl<T>(
@@ -41,7 +41,7 @@ export function formArrayControl<T>(
   options: ArrayValidatorsOptions<T>
 ): FormArrayControl<T | undefined>;
 export function formArrayControl<T>(
-  options: AngularControlOptions<T>
+  options: AngularArrayControlOptions<T>
 ): FormArrayControl<T>;
 export function formArrayControl<T>(
   value: undefined,
@@ -52,7 +52,7 @@ export function formArrayControl<T>(
   validators?: ValidatorFn<T>[]
 ): FormArrayControl<T>;
 export function formArrayControl<T>(
-  options?: AngularControlOptions<T> | T,
+  options?: AngularArrayControlOptions<T> | T,
   validators?: ValidatorFn<T>[]
 ): FormArrayControl<T> {
   return new FormArrayControl(createFormControlOptions(options, validators));

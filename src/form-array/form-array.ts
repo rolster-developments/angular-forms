@@ -11,16 +11,16 @@ import { AngularArrayControl } from '../types';
 type FormControls<T extends AngularArrayControl = AngularArrayControl> =
   AbstractControls<T>;
 
+export class FormArray<
+  G extends FormControls = FormControls,
+  R = any
+> extends RolsterFormArray<G, R> {}
+
 type ArrayOptions<G extends FormControls, R> = FormArrayOptions<
   G,
   R,
   AbstractArrayGroup<G, R>
 >;
-
-export class FormArray<
-  G extends FormControls = FormControls,
-  R = any
-> extends RolsterFormArray<G, R> {}
 
 export function formArray<
   G extends FormControls = FormControls,

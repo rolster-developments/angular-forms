@@ -1,5 +1,6 @@
 *.log
 .DS_Store
+backup
 coverage
 node_modules
 dist

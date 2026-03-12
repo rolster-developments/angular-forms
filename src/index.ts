@@ -9,7 +9,7 @@ export {
   formArrayGroup
 } from './form-array';
 export { FormControl, FormVoid, formControl } from './form-control';
-export { FormControls, FormGroup, formGroup } from './form-group';
+export { AngularFormControls as FormControls, FormGroup, formGroup } from './form-group';
 export {
   AngularArrayControl,
   AngularArrayVoid,
