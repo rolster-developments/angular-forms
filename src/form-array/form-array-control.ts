@@ -3,7 +3,7 @@ import { createFormControlOptions } from '@rolster/forms/arguments';
 import { ValidatorFn } from '@rolster/validators';
 import { v4 as uuid } from 'uuid';
 import { FormControl } from '../form-control/form-control';
-import { AngularArrayControl } from '../types';
+import { AngularArrayControl } from './form-array-control.type';
 
 type AngularArrayControlOptions<T> = Omit<FormArrayControlOptions<T>, 'uuid'>;
 

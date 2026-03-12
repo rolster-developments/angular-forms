@@ -1,7 +1,7 @@
 import { effect, Signal } from '@angular/core';
 import { controlIsValid, hasError, someErrors } from '@rolster/forms/helpers';
 import { ValidatorError, ValidatorFn } from '@rolster/validators';
-import { setValueInSignal } from '../helpers';
+import { setValueInSignal } from './form-control.helper';
 import { AngularControl } from './form-control.type';
 
 export interface SignalControlOptions<T = any> {
@@ -28,7 +28,7 @@ export class FormSignalControl<T = any> implements AngularControl<T> {
     protected validators?: ValidatorFn<T>[]
   ) {
     effect(() => {
-      this.updateValueAndValidity(this.signals.value(), this.validators);
+      this.refreshValidity(this.signals.value(), this.validators);
     });
   }
 
@@ -143,13 +143,10 @@ export class FormSignalControl<T = any> implements AngularControl<T> {
 
   public setValidators(validators: ValidatorFn<T>[] = []): void {
     this.validators = validators;
-    this.updateValueAndValidity(this.value(), validators);
+    this.refreshValidity(this.value(), validators);
   }
 
-  protected updateValueAndValidity(
-    value: T,
-    validators?: ValidatorFn<T>[]
-  ): void {
+  protected refreshValidity(value: T, validators?: ValidatorFn<T>[]): void {
     if (validators) {
       const errors = controlIsValid({ value, validators });
 

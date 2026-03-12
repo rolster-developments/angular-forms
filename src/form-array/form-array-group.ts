@@ -1,20 +1,22 @@
-import {
-  AbstractArrayGroup,
-  AbstractControls,
-  FormArrayGroupOptions,
-  ValidatorGroupFn
-} from '@rolster/forms';
-import { createFormGroupOptions } from '@rolster/forms/arguments';
 import { v4 as uuid } from 'uuid';
-import { FormGroup } from '../form-group';
-import { AngularArrayControl } from '../types';
+import { createFormGroupOptions } from '../form-group/form-group.helper';
+import { FormGroup } from '../form-group/form-group';
+import {
+  AbstractAngularControls,
+  ValidatorGroupFn
+} from '../form-group/form-group.type';
+import { AngularArrayControl } from './form-array-control.type';
+import {
+  AbstractAngularArrayGroup,
+  AngularFormArrayGroupOptions
+} from './form-array-group.type';
 
 export type FormArrayControls<
   T extends AngularArrayControl = AngularArrayControl
-> = AbstractControls<T>;
+> = AbstractAngularControls<T>;
 
 type ArrayGroupOptions<T extends FormArrayControls> = Omit<
-  FormArrayGroupOptions<T>,
+  AngularFormArrayGroupOptions<T>,
   'uuid'
 >;
 
@@ -23,7 +25,7 @@ export class FormArrayGroup<
     R = any
   >
   extends FormGroup<C>
-  implements AbstractArrayGroup<C>
+  implements AbstractAngularArrayGroup<C>
 {
   public readonly uuid: string;
 

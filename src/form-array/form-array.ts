@@ -1,41 +1,267 @@
 import {
-  AbstractArrayGroup,
-  AbstractControls,
-  FormArray as RolsterFormArray,
-  FormArrayOptions,
+  computed,
+  effect,
+  signal,
+  Signal,
+  WritableSignal
+} from '@angular/core';
+import { hasError, someErrors } from '@rolster/forms/helpers';
+import { ValidatorError } from '@rolster/validators';
+import { AngularArrayControl } from './form-array-control.type';
+import {
+  AbstractAngularArrayControls,
+  AbstractAngularArrayGroup,
+  AngularArrayControlsSignal
+} from './form-array-group.type';
+import {
+  createFormArrayOptions,
+  formArrayIsValid,
+  verifyAllTrueInGroup,
+  verifyAnyTrueInGroup
+} from './form-array.helper';
+import {
+  AbstractAngularArray,
+  AngularFormArrayOptions,
   ValidatorArrayFn
-} from '@rolster/forms';
-import { createFormArrayOptions } from '@rolster/forms/arguments';
-import { AngularArrayControl } from '../types';
+} from './form-array.type';
 
-type FormControls<T extends AngularArrayControl = AngularArrayControl> =
-  AbstractControls<T>;
+type FormArrayControls<T extends AngularArrayControl = AngularArrayControl> =
+  AbstractAngularArrayControls<T>;
 
-export class FormArray<
-  G extends FormControls = FormControls,
-  R = any
-> extends RolsterFormArray<G, R> {}
+export class FormArray<C extends FormArrayControls = FormArrayControls, R = any>
+  implements AbstractAngularArray<C, R>
+{
+  private defaultValue?: AbstractAngularArrayGroup<C, R>[];
 
-type ArrayOptions<G extends FormControls, R> = FormArrayOptions<
-  G,
+  private validators?: ValidatorArrayFn<C, R>[];
+
+  private map: Map<string, AbstractAngularArrayGroup<C, R>>;
+
+  private _groups: WritableSignal<AbstractAngularArrayGroup<C, R>[]>;
+
+  private validArray: WritableSignal<boolean>;
+
+  private validGroups: Signal<boolean>;
+
+  private _disabled: WritableSignal<boolean>;
+
+  public readonly controls: Signal<C[]>;
+
+  public readonly value: Signal<AngularArrayControlsSignal<C>[]>;
+
+  public readonly enabled: Signal<boolean>;
+
+  public readonly dirty: Signal<boolean>;
+
+  public readonly dirties: Signal<boolean>;
+
+  public readonly pristine: Signal<boolean>;
+
+  public readonly pristines: Signal<boolean>;
+
+  public readonly touched: Signal<boolean>;
+
+  public readonly untouched: Signal<boolean>;
+
+  public readonly toucheds: Signal<boolean>;
+
+  public readonly untoucheds: Signal<boolean>;
+
+  public readonly valid: Signal<boolean>;
+
+  public readonly invalid: Signal<boolean>;
+
+  public readonly errors: WritableSignal<ValidatorError[]>;
+
+  public readonly error: Signal<ValidatorError | undefined>;
+
+  public readonly wrong: Signal<boolean>;
+
+  constructor();
+  constructor(options: ArrayOptions<C, R>);
+  constructor(
+    groups: AbstractAngularArrayGroup<C, R>[],
+    validators?: ValidatorArrayFn<C, R>[]
+  );
+  constructor(
+    options?: ArrayOptions<C, R> | AbstractAngularArrayGroup<C, R>[],
+    validators?: ValidatorArrayFn<C, R>[]
+  ) {
+    const formArray = createFormArrayOptions(options, validators);
+
+    this.defaultValue = formArray.groups;
+    this.validators = formArray.validators;
+
+    this.map = new Map();
+    this._groups = signal(formArray.groups || []);
+
+    this.controls = computed(() => {
+      return this._groups().map(({ controls }) => controls);
+    });
+
+    this.value = computed(() => this._groups().map(({ value }) => value()));
+
+    this._disabled = signal(false);
+
+    this.enabled = computed(() => !this._disabled());
+
+    this.dirty = computed(() => verifyAnyTrueInGroup(this._groups(), 'dirty'));
+
+    this.pristine = computed(() => !this.dirty());
+
+    this.dirties = computed(() =>
+      verifyAllTrueInGroup(this._groups(), 'dirty')
+    );
+
+    this.pristines = computed(() => !this.dirties());
+
+    this.touched = computed(() =>
+      verifyAnyTrueInGroup(this._groups(), 'touched')
+    );
+
+    this.untouched = computed(() => !this.touched());
+
+    this.toucheds = computed(() =>
+      verifyAllTrueInGroup(this._groups(), 'touched')
+    );
+
+    this.untoucheds = computed(() => !this.toucheds());
+
+    this.validGroups = computed(() =>
+      verifyAllTrueInGroup(this._groups(), 'valid')
+    );
+
+    this.validArray = signal(true);
+
+    this.errors = signal([]);
+
+    this.error = computed(() => this.errors()[0]);
+
+    this.valid = computed(() => this.validArray() && this.validGroups());
+
+    this.invalid = computed(() => !this.valid());
+
+    this.wrong = computed(() => this.touched() && this.invalid());
+
+    effect(() => {
+      const values = this._groups();
+
+      this.map.clear();
+
+      values.forEach((group) => {
+        this.map.set(group.uuid, group);
+      });
+
+      this.refreshValidity(values, this.validators);
+    });
+  }
+
+  public get groups(): Signal<AbstractAngularArrayGroup<C, R>[]> {
+    return this._groups;
+  }
+
+  public get data(): AngularArrayControlsSignal<C>[] {
+    return this.value();
+  }
+
+  public get disabled(): Signal<boolean> {
+    return this._disabled;
+  }
+
+  public disable(): void {
+    this._disabled.set(true);
+  }
+
+  public enable(): void {
+    this._disabled.set(false);
+  }
+
+  public setDefaultValue(groups: AbstractAngularArrayGroup<C, R>[]): void {
+    this.defaultValue = groups;
+    this.setValue(groups);
+  }
+
+  public setValue(groups: AbstractAngularArrayGroup<C, R>[]): void {
+    this._groups.set(groups);
+  }
+
+  public hasError(key: string): boolean {
+    return hasError(this.errors(), key);
+  }
+
+  public someErrors(keys: string[]): boolean {
+    return someErrors(this.errors(), keys);
+  }
+
+  public findByUuid(uuid: string): Undefined<AbstractAngularArrayGroup<C, R>> {
+    return this.map.get(uuid);
+  }
+
+  public push(group: AbstractAngularArrayGroup<C, R>): void {
+    this._groups.set([...this._groups(), group]);
+  }
+
+  public merge(groups: AbstractAngularArrayGroup<C, R>[]): void {
+    this._groups.set([...this._groups(), ...groups]);
+  }
+
+  public remove(group: AbstractAngularArrayGroup<C, R>): void {
+    this._groups.set(this._groups().filter(({ uuid }) => uuid !== group.uuid));
+  }
+
+  public setValidators(validators: ValidatorArrayFn<C, R>[]): void {
+    this.validators = validators;
+
+    this.refreshValidity(this.groups(), validators);
+  }
+
+  public reset(): void {
+    this._groups.set(this.defaultValue || []);
+  }
+
+  private refreshValidity(
+    groups: AbstractAngularArrayGroup<C, R>[],
+    validators?: ValidatorArrayFn<C, R>[]
+  ): void {
+    if (validators) {
+      const errors = formArrayIsValid({ groups, validators });
+
+      this.errors.set(errors);
+      this.validArray.set(errors.length === 0);
+    } else {
+      this.validArray.set(true);
+      this.errors.set([]);
+    }
+  }
+}
+
+type ArrayOptions<C extends FormArrayControls, R> = AngularFormArrayOptions<
+  C,
   R,
-  AbstractArrayGroup<G, R>
+  AbstractAngularArrayGroup<C, R>
 >;
 
 export function formArray<
-  G extends FormControls = FormControls,
+  C extends FormArrayControls = FormArrayControls,
   R = any
->(): FormArray<G, R>;
-export function formArray<G extends FormControls = FormControls, R = any>(
-  options: ArrayOptions<G, R>
-): FormArray<G, R>;
-export function formArray<G extends FormControls = FormControls, R = any>(
-  groups: AbstractArrayGroup<G, R>[],
-  validators?: ValidatorArrayFn<G, R>[]
-): FormArray<G, R>;
-export function formArray<G extends FormControls = FormControls, R = any>(
-  options?: ArrayOptions<G, R> | AbstractArrayGroup<G, R>[],
-  validators?: ValidatorArrayFn<G, R>[]
-): FormArray<G, R> {
+>(): FormArray<C, R>;
+export function formArray<
+  C extends FormArrayControls = FormArrayControls,
+  R = any
+>(options: ArrayOptions<C, R>): FormArray<C, R>;
+export function formArray<
+  C extends FormArrayControls = FormArrayControls,
+  R = any
+>(
+  groups: AbstractAngularArrayGroup<C, R>[],
+  validators?: ValidatorArrayFn<C, R>[]
+): FormArray<C, R>;
+export function formArray<
+  C extends FormArrayControls = FormArrayControls,
+  R = any
+>(
+  options?: ArrayOptions<C, R> | AbstractAngularArrayGroup<C, R>[],
+  validators?: ValidatorArrayFn<C, R>[]
+): FormArray<C, R> {
   return new FormArray(createFormArrayOptions(options, validators));
 }

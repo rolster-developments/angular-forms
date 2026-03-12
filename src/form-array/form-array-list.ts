@@ -2,13 +2,19 @@ import { computed, signal, Signal, WritableSignal } from '@angular/core';
 import { ValidatorError, ValidatorFn } from '@rolster/validators';
 import { v4 as uuid } from 'uuid';
 import { FormSignalControl } from '../form-control/form-signal-control';
-import { controlsToData, reduceControlsBoolean } from '../helpers';
 import {
   AngularArrayControls,
-  AngularArrayControlsData,
+  AngularArrayControlsData
+} from './form-array-group.type';
+import {
   AngularArrayList,
   AngularArrayListValueToControls
-} from '../types';
+} from './form-array-list.type';
+import {
+  controlsToValue,
+  verifyAllTrueInControls,
+  verifyAnyTrueInControls
+} from '../form-group/form-group.helper';
 
 export class FormArrayList<
     C extends AngularArrayControls = AngularArrayControls
@@ -32,28 +38,27 @@ export class FormArrayList<
     const errors = signal<ValidatorError[]>([]);
 
     const touched = computed(() =>
-      this.signal().reduce((touched, controls) => {
-        return (
-          touched ||
-          reduceControlsBoolean(controls, (control) => control.touched())
-        );
-      }, false)
+      this.signal().reduce(
+        (touched, controls) =>
+          touched || verifyAnyTrueInControls(controls, 'touched'),
+        false
+      )
     );
 
     const dirty = computed(() =>
-      this.signal().reduce((dirty, controls) => {
-        return (
-          dirty || reduceControlsBoolean(controls, (control) => control.dirty())
-        );
-      }, false)
+      this.signal().reduce(
+        (dirty, controls) =>
+          dirty || verifyAnyTrueInControls(controls, 'dirty'),
+        false
+      )
     );
 
     const valid = computed(() =>
-      this.signal().reduce((valid, controls) => {
-        return (
-          valid && reduceControlsBoolean(controls, (control) => control.valid())
-        );
-      }, true)
+      this.signal().reduce(
+        (valid, controls) =>
+          valid && verifyAllTrueInControls(controls, 'valid'),
+        true
+      )
     );
 
     super(
@@ -71,7 +76,7 @@ export class FormArrayList<
         unfocused: computed(() => !focused()),
         untouched: computed(() => !touched()),
         valid,
-        value: computed(() => this.signal().map(controlsToData)),
+        value: computed(() => this.signal().map(controlsToValue)),
         wrong: computed(() => touched() && !valid())
       },
       validators
