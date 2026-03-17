@@ -33,13 +33,13 @@ export class FormArray<C extends FormArrayControls = FormArrayControls, R = any>
 {
   private defaultValue?: AbstractAngularArrayGroup<C, R>[];
 
-  private validators?: ValidatorArrayFn<C, R>[];
+  private validators: WritableSignal<ValidatorArrayFn<C, R>[] | undefined>;
 
   private map: Map<string, AbstractAngularArrayGroup<C, R>>;
 
   private _groups: WritableSignal<AbstractAngularArrayGroup<C, R>[]>;
 
-  private validArray: WritableSignal<boolean>;
+  private validArray: Signal<boolean>;
 
   private validGroups: Signal<boolean>;
 
@@ -71,7 +71,7 @@ export class FormArray<C extends FormArrayControls = FormArrayControls, R = any>
 
   public readonly invalid: Signal<boolean>;
 
-  public readonly errors: WritableSignal<ValidatorError[]>;
+  public readonly errors: Signal<ValidatorError[]>;
 
   public readonly error: Signal<ValidatorError | undefined>;
 
@@ -90,7 +90,7 @@ export class FormArray<C extends FormArrayControls = FormArrayControls, R = any>
     const formArray = createFormArrayOptions(options, validators);
 
     this.defaultValue = formArray.groups;
-    this.validators = formArray.validators;
+    this.validators = signal(formArray.validators);
 
     this.map = new Map();
     this._groups = signal(formArray.groups || []);
@@ -131,9 +131,14 @@ export class FormArray<C extends FormArrayControls = FormArrayControls, R = any>
       verifyAllTrueInGroup(this._groups(), 'valid')
     );
 
-    this.validArray = signal(true);
+    this.errors = computed(() => {
+      const validators = this.validators();
+      const groups = this._groups();
 
-    this.errors = signal([]);
+      return validators ? formArrayIsValid({ groups, validators }) : [];
+    });
+
+    this.validArray = computed(() => this.errors().length === 0);
 
     this.error = computed(() => this.errors()[0]);
 
@@ -151,8 +156,6 @@ export class FormArray<C extends FormArrayControls = FormArrayControls, R = any>
       values.forEach((group) => {
         this.map.set(group.uuid, group);
       });
-
-      this.refreshValidity(values, this.validators);
     });
   }
 
@@ -210,28 +213,11 @@ export class FormArray<C extends FormArrayControls = FormArrayControls, R = any>
   }
 
   public setValidators(validators: ValidatorArrayFn<C, R>[]): void {
-    this.validators = validators;
-
-    this.refreshValidity(this.groups(), validators);
+    this.validators.set(validators);
   }
 
   public reset(): void {
     this._groups.set(this.defaultValue || []);
-  }
-
-  private refreshValidity(
-    groups: AbstractAngularArrayGroup<C, R>[],
-    validators?: ValidatorArrayFn<C, R>[]
-  ): void {
-    if (validators) {
-      const errors = formArrayIsValid({ groups, validators });
-
-      this.errors.set(errors);
-      this.validArray.set(errors.length === 0);
-    } else {
-      this.validArray.set(true);
-      this.errors.set([]);
-    }
   }
 }
 

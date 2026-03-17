@@ -1,5 +1,5 @@
-import { effect, Signal } from '@angular/core';
-import { controlIsValid, hasError, someErrors } from '@rolster/forms/helpers';
+import { Signal } from '@angular/core';
+import { hasError, someErrors } from '@rolster/forms/helpers';
 import { ValidatorError, ValidatorFn } from '@rolster/validators';
 import { setValueInSignal } from './form-control.helper';
 import { AngularControl } from './form-control.type';
@@ -17,6 +17,7 @@ export interface SignalControlOptions<T = any> {
   readonly unfocused: Signal<boolean>;
   readonly untouched: Signal<boolean>;
   readonly valid: Signal<boolean>;
+  readonly validators: Signal<ValidatorFn<T>[] | undefined>;
   readonly value: Signal<T>;
   readonly wrong: Signal<boolean>;
 }
@@ -24,13 +25,8 @@ export interface SignalControlOptions<T = any> {
 export class FormSignalControl<T = any> implements AngularControl<T> {
   protected constructor(
     protected defaultValue: T,
-    protected readonly signals: SignalControlOptions<T>,
-    protected validators?: ValidatorFn<T>[]
-  ) {
-    effect(() => {
-      this.refreshValidity(this.signals.value(), this.validators);
-    });
-  }
+    protected readonly signals: SignalControlOptions<T>
+  ) {}
 
   public get focused(): Signal<boolean> {
     return this.signals.focused;
@@ -142,19 +138,6 @@ export class FormSignalControl<T = any> implements AngularControl<T> {
   }
 
   public setValidators(validators: ValidatorFn<T>[] = []): void {
-    this.validators = validators;
-    this.refreshValidity(this.value(), validators);
-  }
-
-  protected refreshValidity(value: T, validators?: ValidatorFn<T>[]): void {
-    if (validators) {
-      const errors = controlIsValid({ value, validators });
-
-      setValueInSignal(this.signals.valid, errors.length === 0);
-      setValueInSignal(this.signals.errors, errors);
-    } else {
-      setValueInSignal(this.signals.valid, true);
-      setValueInSignal(this.signals.errors, []);
-    }
+    setValueInSignal(this.signals.validators, validators);
   }
 }

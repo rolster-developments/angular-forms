@@ -1,10 +1,4 @@
-import {
-  computed,
-  effect,
-  signal,
-  Signal,
-  WritableSignal
-} from '@angular/core';
+import { computed, signal, Signal, WritableSignal } from '@angular/core';
 import { ValidatorError } from '@rolster/validators';
 import {
   controlsToValue,
@@ -24,11 +18,11 @@ import {
 export class FormGroup<C extends AngularFormControls = AngularFormControls>
   implements AbstractAngularFormGroup<C>
 {
-  private validGroup: WritableSignal<boolean>;
+  private validGroup: Signal<boolean>;
 
   private validControls: Signal<boolean>;
 
-  private validators?: ValidatorGroupFn<C>[];
+  private validators: WritableSignal<ValidatorGroupFn<C>[] | undefined>;
 
   protected _controls: C;
 
@@ -54,7 +48,7 @@ export class FormGroup<C extends AngularFormControls = AngularFormControls>
 
   public readonly invalid: Signal<boolean>;
 
-  public readonly errors: WritableSignal<ValidatorError[]>;
+  public readonly errors: Signal<ValidatorError[]>;
 
   public readonly error: Signal<ValidatorError | undefined>;
 
@@ -69,7 +63,7 @@ export class FormGroup<C extends AngularFormControls = AngularFormControls>
     const formGroup = createFormGroupOptions(options, validators);
 
     this._controls = formGroup.controls;
-    this.validators = formGroup.validators;
+    this.validators = signal(formGroup.validators);
 
     this.value = computed(() => controlsToValue(this.controls));
 
@@ -101,9 +95,16 @@ export class FormGroup<C extends AngularFormControls = AngularFormControls>
       verifyAllTrueInControls(this._controls, 'valid')
     );
 
-    this.validGroup = signal(true);
+    this.errors = computed(() => {
+      this.value();
+      const validators = this.validators();
 
-    this.errors = signal([]);
+      return validators
+        ? formGroupIsValid({ controls: this.controls, validators })
+        : [];
+    });
+
+    this.validGroup = computed(() => this.errors().length === 0);
 
     this.error = computed(() => this.errors()[0]);
 
@@ -112,11 +113,6 @@ export class FormGroup<C extends AngularFormControls = AngularFormControls>
     this.invalid = computed(() => !this.valid());
 
     this.wrong = computed(() => this.touched() && this.invalid());
-
-    effect(() => {
-      this.value();
-      this.refreshValidity(this.controls, this.validators);
-    });
   }
 
   public get controls(): C {
@@ -134,23 +130,7 @@ export class FormGroup<C extends AngularFormControls = AngularFormControls>
   }
 
   public setValidators(validators: ValidatorGroupFn<C>[]): void {
-    this.validators = validators;
-    this.refreshValidity(this.controls, validators);
-  }
-
-  private refreshValidity(
-    controls: C,
-    validators?: ValidatorGroupFn<C>[]
-  ): void {
-    if (validators) {
-      const errors = formGroupIsValid({ controls, validators });
-
-      this.errors.set(errors);
-      this.validGroup.set(errors.length === 0);
-    } else {
-      this.errors.set([]);
-      this.validGroup.set(true);
-    }
+    this.validators.set(validators);
   }
 }
 

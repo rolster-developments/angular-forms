@@ -4,8 +4,11 @@ import {
   FormValidatorsOptions,
   FormValueOptions
 } from '@rolster/forms';
-import { createFormControlOptions } from '@rolster/forms/arguments';
-import { ValidatorError, ValidatorFn } from '@rolster/validators';
+import {
+  createFormControlOptions,
+  formControlIsValid
+} from '@rolster/forms/helpers';
+import { ValidatorFn } from '@rolster/validators';
 import { FormSignalControl } from './form-signal-control';
 
 export class FormControl<T = any> extends FormSignalControl<T> {
@@ -22,29 +25,36 @@ export class FormControl<T = any> extends FormSignalControl<T> {
     const touched = signal(false);
     const dirty = signal(false);
     const disabled = signal(false);
-    const valid = signal(true);
-    const errors = signal<ValidatorError[]>([]);
 
-    super(
-      formControl.value,
-      {
-        dirty,
-        disabled,
-        enabled: computed(() => !disabled()),
-        error: computed(() => errors()[0]),
-        errors,
-        focused,
-        invalid: computed(() => !valid()),
-        pristine: computed(() => !dirty()),
-        touched,
-        unfocused: computed(() => !focused()),
-        untouched: computed(() => !touched()),
-        valid,
-        value: signal(formControl.value),
-        wrong: computed(() => touched() && !valid())
-      },
-      formControl.validators
-    );
+    const valueSignal = signal(formControl.value);
+    const validatorsSignal = signal(validators);
+
+    const errors = computed(() => {
+      const validators = validatorsSignal();
+      const value = valueSignal();
+
+      return validators ? formControlIsValid({ value, validators }) : [];
+    });
+
+    const valid = computed(() => errors().length === 0);
+
+    super(formControl.value, {
+      dirty,
+      disabled,
+      enabled: computed(() => !disabled()),
+      error: computed(() => errors()[0]),
+      errors,
+      focused,
+      invalid: computed(() => !valid()),
+      pristine: computed(() => !dirty()),
+      touched,
+      unfocused: computed(() => !focused()),
+      untouched: computed(() => !touched()),
+      valid,
+      value: valueSignal,
+      validators: validatorsSignal,
+      wrong: computed(() => touched() && !valid())
+    });
   }
 }
 

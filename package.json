@@ -1,6 +1,6 @@
 {
   "name": "@rolster/angular-forms",
-  "version": "19.3.0",
+  "version": "19.3.2",
   "type": "module",
   "description": "It implements a set of classes that allow managing the control of states of the input components in Angular",
   "license": "MIT",
@@ -36,7 +36,7 @@
   },
   "dependencies": {
     "@angular/core": "^17.3.12 || ^18.2.14 || ^19.2.19",
-    "@rolster/forms": "^3.2.1",
+    "@rolster/forms": "^3.3.1",
     "@rolster/validators": "^2.4.1",
     "uuid": "^13.0.0"
   },

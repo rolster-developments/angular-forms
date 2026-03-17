@@ -1,5 +1,6 @@
 import { computed, signal, Signal, WritableSignal } from '@angular/core';
-import { ValidatorError, ValidatorFn } from '@rolster/validators';
+import { formControlIsValid } from '@rolster/forms/helpers';
+import { ValidatorFn } from '@rolster/validators';
 import { v4 as uuid } from 'uuid';
 import { FormSignalControl } from '../form-control/form-signal-control';
 import {
@@ -12,7 +13,6 @@ import {
 } from './form-array-list.type';
 import {
   controlsToValue,
-  verifyAllTrueInControls,
   verifyAnyTrueInControls
 } from '../form-group/form-group.helper';
 
@@ -35,7 +35,6 @@ export class FormArrayList<
 
     const focused = signal(false);
     const disabled = signal(false);
-    const errors = signal<ValidatorError[]>([]);
 
     const touched = computed(() =>
       this.signal().reduce(
@@ -53,34 +52,35 @@ export class FormArrayList<
       )
     );
 
-    const valid = computed(() =>
-      this.signal().reduce(
-        (valid, controls) =>
-          valid && verifyAllTrueInControls(controls, 'valid'),
-        true
-      )
-    );
+    const valueSignal = computed(() => this.signal().map(controlsToValue));
+    const validatorsSignal = signal(validators);
 
-    super(
-      formValue,
-      {
-        dirty,
-        disabled,
-        enabled: computed(() => !disabled()),
-        error: computed(() => errors()[0]),
-        errors,
-        focused,
-        invalid: computed(() => !valid()),
-        pristine: computed(() => !dirty()),
-        touched,
-        unfocused: computed(() => !focused()),
-        untouched: computed(() => !touched()),
-        valid,
-        value: computed(() => this.signal().map(controlsToValue)),
-        wrong: computed(() => touched() && !valid())
-      },
-      validators
-    );
+    const errors = computed(() => {
+      const validators = validatorsSignal();
+      const value = valueSignal();
+
+      return validators ? formControlIsValid({ value, validators }) : [];
+    });
+
+    const valid = computed(() => errors().length === 0);
+
+    super(formValue, {
+      dirty,
+      disabled,
+      enabled: computed(() => !disabled()),
+      error: computed(() => errors()[0]),
+      errors,
+      focused,
+      invalid: computed(() => !valid()),
+      pristine: computed(() => !dirty()),
+      touched,
+      unfocused: computed(() => !focused()),
+      untouched: computed(() => !touched()),
+      valid,
+      validators: validatorsSignal,
+      value: valueSignal,
+      wrong: computed(() => touched() && !valid())
+    });
 
     this.uuid = uuid();
     this.signal = signal(formValue.map(valueToControls));
