@@ -27,7 +27,7 @@ export class FormControl<T = any> extends FormSignalControl<T> {
     const disabled = signal(false);
 
     const valueSignal = signal(formControl.value);
-    const validatorsSignal = signal(validators);
+    const validatorsSignal = signal(formControl.validators);
 
     const errors = computed(() => {
       const validators = validatorsSignal();

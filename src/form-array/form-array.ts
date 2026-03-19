@@ -37,13 +37,13 @@ export class FormArray<C extends FormArrayControls = FormArrayControls, R = any>
 
   private map: Map<string, AbstractAngularArrayGroup<C, R>>;
 
-  private _groups: WritableSignal<AbstractAngularArrayGroup<C, R>[]>;
+  private groups$: WritableSignal<AbstractAngularArrayGroup<C, R>[]>;
 
   private validArray: Signal<boolean>;
 
   private validGroups: Signal<boolean>;
 
-  private _disabled: WritableSignal<boolean>;
+  private disabled$: WritableSignal<boolean>;
 
   public readonly controls: Signal<C[]>;
 
@@ -93,47 +93,47 @@ export class FormArray<C extends FormArrayControls = FormArrayControls, R = any>
     this.validators = signal(formArray.validators);
 
     this.map = new Map();
-    this._groups = signal(formArray.groups || []);
+    this.groups$ = signal(formArray.groups || []);
 
     this.controls = computed(() => {
-      return this._groups().map(({ controls }) => controls);
+      return this.groups$().map(({ controls }) => controls);
     });
 
-    this.value = computed(() => this._groups().map(({ value }) => value()));
+    this.value = computed(() => this.groups$().map(({ value }) => value()));
 
-    this._disabled = signal(false);
+    this.disabled$ = signal(false);
 
-    this.enabled = computed(() => !this._disabled());
+    this.enabled = computed(() => !this.disabled$());
 
-    this.dirty = computed(() => verifyAnyTrueInGroup(this._groups(), 'dirty'));
+    this.dirty = computed(() => verifyAnyTrueInGroup(this.groups$(), 'dirty'));
 
     this.pristine = computed(() => !this.dirty());
 
     this.dirties = computed(() =>
-      verifyAllTrueInGroup(this._groups(), 'dirty')
+      verifyAllTrueInGroup(this.groups$(), 'dirty')
     );
 
     this.pristines = computed(() => !this.dirties());
 
     this.touched = computed(() =>
-      verifyAnyTrueInGroup(this._groups(), 'touched')
+      verifyAnyTrueInGroup(this.groups$(), 'touched')
     );
 
     this.untouched = computed(() => !this.touched());
 
     this.toucheds = computed(() =>
-      verifyAllTrueInGroup(this._groups(), 'touched')
+      verifyAllTrueInGroup(this.groups$(), 'touched')
     );
 
     this.untoucheds = computed(() => !this.toucheds());
 
     this.validGroups = computed(() =>
-      verifyAllTrueInGroup(this._groups(), 'valid')
+      verifyAllTrueInGroup(this.groups$(), 'valid')
     );
 
     this.errors = computed(() => {
       const validators = this.validators();
-      const groups = this._groups();
+      const groups = this.groups$();
 
       return validators ? formArrayIsValid({ groups, validators }) : [];
     });
@@ -149,7 +149,7 @@ export class FormArray<C extends FormArrayControls = FormArrayControls, R = any>
     this.wrong = computed(() => this.touched() && this.invalid());
 
     effect(() => {
-      const values = this._groups();
+      const values = this.groups$();
 
       this.map.clear();
 
@@ -160,7 +160,7 @@ export class FormArray<C extends FormArrayControls = FormArrayControls, R = any>
   }
 
   public get groups(): Signal<AbstractAngularArrayGroup<C, R>[]> {
-    return this._groups;
+    return this.groups$;
   }
 
   public get data(): AngularArrayControlsSignal<C>[] {
@@ -168,15 +168,15 @@ export class FormArray<C extends FormArrayControls = FormArrayControls, R = any>
   }
 
   public get disabled(): Signal<boolean> {
-    return this._disabled;
+    return this.disabled$;
   }
 
   public disable(): void {
-    this._disabled.set(true);
+    this.disabled$.set(true);
   }
 
   public enable(): void {
-    this._disabled.set(false);
+    this.disabled$.set(false);
   }
 
   public setDefaultValue(groups: AbstractAngularArrayGroup<C, R>[]): void {
@@ -185,7 +185,7 @@ export class FormArray<C extends FormArrayControls = FormArrayControls, R = any>
   }
 
   public setValue(groups: AbstractAngularArrayGroup<C, R>[]): void {
-    this._groups.set(groups);
+    this.groups$.set(groups);
   }
 
   public hasError(key: string): boolean {
@@ -201,15 +201,15 @@ export class FormArray<C extends FormArrayControls = FormArrayControls, R = any>
   }
 
   public push(group: AbstractAngularArrayGroup<C, R>): void {
-    this._groups.set([...this._groups(), group]);
+    this.groups$.set([...this.groups$(), group]);
   }
 
   public merge(groups: AbstractAngularArrayGroup<C, R>[]): void {
-    this._groups.set([...this._groups(), ...groups]);
+    this.groups$.set([...this.groups$(), ...groups]);
   }
 
   public remove(group: AbstractAngularArrayGroup<C, R>): void {
-    this._groups.set(this._groups().filter(({ uuid }) => uuid !== group.uuid));
+    this.groups$.set(this.groups$().filter(({ uuid }) => uuid !== group.uuid));
   }
 
   public setValidators(validators: ValidatorArrayFn<C, R>[]): void {
@@ -217,7 +217,7 @@ export class FormArray<C extends FormArrayControls = FormArrayControls, R = any>
   }
 
   public reset(): void {
-    this._groups.set(this.defaultValue || []);
+    this.groups$.set(this.defaultValue || []);
   }
 }
 

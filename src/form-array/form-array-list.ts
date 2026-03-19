@@ -31,7 +31,7 @@ export class FormArrayList<
     value?: AngularArrayControlsData<C>[],
     validators?: ValidatorFn<AngularArrayControlsData<C>[]>[]
   ) {
-    const formValue = value || [];
+    const formArrayList = value || [];
 
     const focused = signal(false);
     const disabled = signal(false);
@@ -64,7 +64,7 @@ export class FormArrayList<
 
     const valid = computed(() => errors().length === 0);
 
-    super(formValue, {
+    super(formArrayList, {
       dirty,
       disabled,
       enabled: computed(() => !disabled()),
@@ -83,7 +83,7 @@ export class FormArrayList<
     });
 
     this.uuid = uuid();
-    this.signal = signal(formValue.map(valueToControls));
+    this.signal = signal(formArrayList.map(valueToControls));
   }
 
   public get controls(): Signal<C[]> {
