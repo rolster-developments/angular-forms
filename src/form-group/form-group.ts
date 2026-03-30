@@ -123,6 +123,14 @@ export class FormGroup<C extends AngularFormControls = AngularFormControls>
     return this.value();
   }
 
+  public setValue(value: Partial<AngularControlsValue<C>>): void {
+    Object.entries(value).forEach(([key, valueControl]) => {
+      const formControl = this._controls[key as keyof C];
+
+      formControl?.setValue(valueControl);
+    });
+  }
+
   public reset(): void {
     Object.values(this.controls).forEach((control) => {
       control.reset();

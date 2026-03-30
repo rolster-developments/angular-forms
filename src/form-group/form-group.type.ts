@@ -46,6 +46,7 @@ export interface AbstractAngularFormGroup<
   readonly pristines: Signal<boolean>;
   reset: () => void;
   setValidators: (validators: ValidatorGroupFn<C>[]) => void;
+  setValue(value: Partial<AngularControlsValue<C>>): void;
   readonly touched: Signal<boolean>;
   readonly toucheds: Signal<boolean>;
   readonly untouched: Signal<boolean>;
