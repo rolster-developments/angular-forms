@@ -85,7 +85,7 @@ export function verifyAllTrueInGroup<C extends AbstractAngularControls>(
 ): boolean {
   return groups.reduce(
     (value, group) => value && parseBoolean(group[key]),
-    false
+    true
   );
 }
 

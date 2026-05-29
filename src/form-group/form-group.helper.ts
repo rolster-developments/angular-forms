@@ -89,7 +89,8 @@ export function verifyAllTrueInControls<
   T extends AngularFormControl = AngularFormControl
 >(controls: AbstractAngularControls<T>, key: keyof T): boolean {
   return Object.values(controls).reduce(
-    (value, control) => value && controlToBoolean(control, key),
+    (value, control) =>
+      control.disabled() ? value : value && controlToBoolean(control, key),
     true
   );
 }
@@ -98,7 +99,8 @@ export function verifyAnyTrueInControls<
   T extends AngularFormControl = AngularFormControl
 >(controls: AbstractAngularControls<T>, key: keyof T): boolean {
   return Object.values(controls).reduce(
-    (value, control) => value || controlToBoolean(control, key),
-    true
+    (value, control) =>
+      control.disabled() ? value : value || controlToBoolean(control, key),
+    false
   );
 }

@@ -184,6 +184,10 @@ export class FormArray<C extends FormArrayControls = FormArrayControls, R = any>
     this.setValue(groups);
   }
 
+  public setStartValue(groups: AbstractAngularArrayGroup<C, R>[]): void {
+    this.groups$.set(groups);
+  }
+
   public setValue(groups: AbstractAngularArrayGroup<C, R>[]): void {
     this.groups$.set(groups);
   }

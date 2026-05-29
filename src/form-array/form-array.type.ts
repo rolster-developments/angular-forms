@@ -30,6 +30,7 @@ export interface AbstractAngularArray<
   push: (group: G) => void;
   remove: (group: G) => void;
   setDefaultValue: (groups: G[]) => void;
+  setStartValue: (groups: G[]) => void;
   setValue: (groups: G[]) => void;
   setValidators: (validators: ValidatorArrayFn<C, R>[]) => void;
   readonly toucheds: Signal<boolean>;
