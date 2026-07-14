@@ -1,14 +1,15 @@
 import { parseBoolean } from '@rolster/commons';
 import { ValidatorError } from '@rolster/validators';
-import {
-  AbstractAngularArrayControls,
-  AbstractAngularArrayGroup
-} from './form-array-group.type';
-import { AngularFormArrayOptions, ValidatorArrayFn } from './form-array.type';
+
 import {
   AbstractAngularControls,
   AbstractAngularFormGroup
 } from '../form-group/form-group.type';
+import { AngularFormArrayOptions, ValidatorArrayFn } from './form-array.type';
+import {
+  AbstractAngularArrayControls,
+  AbstractAngularArrayGroup
+} from './form-array-group.type';
 
 type ArrayArgsOptions<
   C extends AbstractAngularArrayControls,

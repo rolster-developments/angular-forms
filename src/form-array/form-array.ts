@@ -1,18 +1,13 @@
 import {
   computed,
   effect,
-  signal,
   Signal,
+  signal,
   WritableSignal
 } from '@angular/core';
 import { hasError, someErrors } from '@rolster/forms/helpers';
 import { ValidatorError } from '@rolster/validators';
-import { AngularArrayControl } from './form-array-control.type';
-import {
-  AbstractAngularArrayControls,
-  AbstractAngularArrayGroup,
-  AngularArrayControlsSignal
-} from './form-array-group.type';
+
 import {
   createFormArrayOptions,
   formArrayIsValid,
@@ -24,6 +19,12 @@ import {
   AngularFormArrayOptions,
   ValidatorArrayFn
 } from './form-array.type';
+import { AngularArrayControl } from './form-array-control.type';
+import {
+  AbstractAngularArrayControls,
+  AbstractAngularArrayGroup,
+  AngularArrayControlsSignal
+} from './form-array-group.type';
 
 type FormArrayControls<T extends AngularArrayControl = AngularArrayControl> =
   AbstractAngularArrayControls<T>;

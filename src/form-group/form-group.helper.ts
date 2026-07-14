@@ -1,14 +1,15 @@
 import { isSignal } from '@angular/core';
 import { parseBoolean } from '@rolster/commons';
 import { ValidatorError } from '@rolster/validators';
+
+import { AngularFormControl } from '../form-control/form-control.type';
 import {
   AbstractAngularControls,
-  AngularControlsValue,
   AngularControlsSignal,
+  AngularControlsValue,
   AngularFormGroupOptions,
   ValidatorGroupFn
 } from './form-group.type';
-import { AngularFormControl } from '../form-control/form-control.type';
 
 type GroupArgsOptions<C extends AbstractAngularControls> = [
   AngularFormGroupOptions<C> | C,

@@ -1,5 +1,6 @@
 import { Signal } from '@angular/core';
 import { ValidatorResult } from '@rolster/validators';
+
 import { AbstractAngularControl } from '../form-control/form-control.type';
 import {
   AbstractAngularArrayControls,
@@ -31,8 +32,8 @@ export interface AbstractAngularArray<
   remove: (group: G) => void;
   setDefaultValue: (groups: G[]) => void;
   setStartValue: (groups: G[]) => void;
-  setValue: (groups: G[]) => void;
   setValidators: (validators: ValidatorArrayFn<C, R>[]) => void;
+  setValue: (groups: G[]) => void;
   readonly toucheds: Signal<boolean>;
   readonly untoucheds: Signal<boolean>;
 }

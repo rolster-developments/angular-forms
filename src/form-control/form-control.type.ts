@@ -28,8 +28,8 @@ export interface AngularFormControl<T = any> extends AbstractAngularControl<T> {
   readonly focused: Signal<boolean>;
   setDefaultValue: (value: T) => void;
   setStartValue: (value: T) => void;
-  setValue: (value: T) => void;
   setValidators: (validators?: ValidatorFn<T>[]) => void;
+  setValue: (value: T) => void;
   touch: () => void;
   readonly unfocused: Signal<boolean>;
 }

@@ -1,6 +1,7 @@
 import { v4 as uuid } from 'uuid';
-import { createFormGroupOptions } from '../form-group/form-group.helper';
+
 import { FormGroup } from '../form-group/form-group';
+import { createFormGroupOptions } from '../form-group/form-group.helper';
 import {
   AbstractAngularControls,
   ValidatorGroupFn
