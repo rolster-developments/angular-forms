@@ -74,7 +74,9 @@ export const formArrayIsValid = <
   return validators.reduce((errors, validator) => {
     const error = validator(groups);
 
-    error && errors.push(error);
+    if (error) {
+      errors.push(error);
+    }
 
     return errors;
   }, [] as ValidatorError[]);

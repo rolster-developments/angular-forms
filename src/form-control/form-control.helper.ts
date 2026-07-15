@@ -7,5 +7,7 @@ export function signalIsWritable(
 }
 
 export function setValueInSignal<T>(signal: Signal<T>, value: T): void {
-  signalIsWritable(signal) && signal.set(value);
+  if (signalIsWritable(signal)) {
+    signal.set(value);
+  }
 }

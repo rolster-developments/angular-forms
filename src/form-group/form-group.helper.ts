@@ -51,7 +51,9 @@ export const formGroupIsValid = <C extends AbstractAngularControls>({
   return validators.reduce((errors, validator) => {
     const error = validator(controls);
 
-    error && errors.push(error);
+    if (error) {
+      errors.push(error);
+    }
 
     return errors;
   }, [] as ValidatorError[]);
