@@ -7,7 +7,6 @@ import {
 } from '@angular/core';
 import { hasError, someErrors } from '@rolster/forms/helpers';
 import { ValidatorError } from '@rolster/validators';
-
 import {
   createFormArrayOptions,
   formArrayIsValid,

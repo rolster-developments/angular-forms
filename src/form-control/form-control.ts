@@ -9,7 +9,6 @@ import {
   formControlIsValid
 } from '@rolster/forms/helpers';
 import { ValidatorFn } from '@rolster/validators';
-
 import { FormSignalControl } from './form-signal-control';
 
 export class FormControl<T = any> extends FormSignalControl<T> {

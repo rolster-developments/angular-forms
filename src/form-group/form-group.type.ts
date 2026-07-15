@@ -1,6 +1,5 @@
 import { Signal } from '@angular/core';
 import { ValidatorError, ValidatorResult } from '@rolster/validators';
-
 import {
   AngularControl,
   AngularFormControl} from '../form-control/form-control.type';
