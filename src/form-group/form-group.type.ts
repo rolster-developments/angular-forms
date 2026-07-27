@@ -2,7 +2,8 @@ import { Signal } from '@angular/core';
 import { ValidatorError, ValidatorResult } from '@rolster/validators';
 import {
   AngularControl,
-  AngularFormControl} from '../form-control/form-control.type';
+  AngularFormControl
+} from '../form-control/form-control.type';
 
 export type AngularFormControls<T extends AngularControl = AngularControl> =
   AbstractAngularControls<T>;
