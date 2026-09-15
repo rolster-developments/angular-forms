@@ -330,19 +330,6 @@ const formPassword = formGroup(
 
 The classes themselves are exported too — `FormControl` / `FormVoid`, `FormGroup`, `FormArray`, `FormArrayGroup`, `FormArrayControl` / `FormArrayVoid`, `FormArrayControls` and `FormArrayList` — and are usually the ones you name in a component field or a helper signature. The `*Void` aliases are the same type with `T | undefined` as value, which is what a control created without an initial value returns.
 
-## Migrating from 22.x
-
-Every control, group and array renamed the two members that expose the value, so the package now reads the same as [`@rolster/react-forms`](https://www.npmjs.com/package/@rolster/react-forms), where `value` is always the plain value.
-
-| 22.x              | 23.x               | Type                              |
-| ----------------- | ------------------ | --------------------------------- |
-| `control.value()` | `control.signal()` | `Signal<T>`                       |
-| `control.data`    | `control.value`    | `T`                               |
-| `group.value()`   | `group.signal()`   | `Signal<AngularControlsValue<C>>` |
-| `group.data`      | `group.value`      | `AngularControlsValue<C>`         |
-
-The mapped types follow the same move: `AngularControlsSignal<C>` now indexes `signal`, and `AngularControlsValue<C>` indexes `value`. In a template the change is mechanical — `[value]="controls.email.value()"` becomes `[value]="controls.email.signal()"`.
-
 ## Contributing
 
 - Daniel Andrés Castillo Pedroza :rocket:
