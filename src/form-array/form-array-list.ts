@@ -24,7 +24,7 @@ export class FormArrayList<
 {
   public readonly uuid: string;
 
-  private signal: WritableSignal<C[]>;
+  private controls$: WritableSignal<C[]>;
 
   constructor(
     private valueToControls: AngularArrayListValueToControls<C>,
@@ -37,7 +37,7 @@ export class FormArrayList<
     const disabled = signal(false);
 
     const touched = computed(() =>
-      this.signal().reduce(
+      this.controls$().reduce(
         (touched, controls) =>
           touched || verifyAnyTrueInControls(controls, 'touched'),
         false
@@ -45,14 +45,14 @@ export class FormArrayList<
     );
 
     const dirty = computed(() =>
-      this.signal().reduce(
+      this.controls$().reduce(
         (dirty, controls) =>
           dirty || verifyAnyTrueInControls(controls, 'dirty'),
         false
       )
     );
 
-    const valueSignal = computed(() => this.signal().map(controlsToValue));
+    const valueSignal = computed(() => this.controls$().map(controlsToValue));
     const validatorsSignal = signal(validators);
 
     const errors = computed(() => {
@@ -83,23 +83,23 @@ export class FormArrayList<
     });
 
     this.uuid = uuid();
-    this.signal = signal(formArrayList.map(valueToControls));
+    this.controls$ = signal(formArrayList.map(valueToControls));
   }
 
   public get controls(): Signal<C[]> {
-    return this.signal;
+    return this.controls$;
   }
 
   public setValue(values: AngularArrayControlsData<C>[]): void {
-    this.signal.set(values.map(this.valueToControls));
+    this.controls$.set(values.map(this.valueToControls));
   }
 
   public push(controls: C): void {
-    this.signal.set(this.signal().concat([controls]));
+    this.controls$.set(this.controls$().concat([controls]));
   }
 
   public remove(controls: C): void {
-    this.signal.set(this.signal().filter((item) => item !== controls));
+    this.controls$.set(this.controls$().filter((item) => item !== controls));
   }
 }
 

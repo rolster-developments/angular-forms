@@ -4,7 +4,7 @@ import { AbstractAngularControl } from '../form-control/form-control.type';
 import {
   AbstractAngularArrayControls,
   AbstractAngularArrayGroup,
-  AngularArrayControlsSignal
+  AngularArrayControlsData
 } from './form-array-group.type';
 
 export type ValidatorArrayFn<
@@ -18,7 +18,7 @@ export interface AbstractAngularArray<
   C extends AbstractAngularArrayControls = AbstractAngularArrayControls,
   R = any,
   G extends AbstractAngularArrayGroup<C, R> = AbstractAngularArrayGroup<C, R>
-> extends AbstractAngularControl<AngularArrayControlsSignal<C>[]> {
+> extends AbstractAngularControl<AngularArrayControlsData<C>[]> {
   readonly controls: Signal<C[]>;
   readonly dirties: Signal<boolean>;
   disable: () => void;

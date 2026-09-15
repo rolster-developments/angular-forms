@@ -26,7 +26,7 @@ export class FormGroup<C extends AngularFormControls = AngularFormControls>
 
   protected _controls: C;
 
-  public readonly value: Signal<AngularControlsValue<C>>;
+  public readonly signal: Signal<AngularControlsValue<C>>;
 
   public readonly dirty: Signal<boolean>;
 
@@ -65,7 +65,7 @@ export class FormGroup<C extends AngularFormControls = AngularFormControls>
     this._controls = formGroup.controls;
     this.validators = signal(formGroup.validators);
 
-    this.value = computed(() => controlsToValue(this.controls));
+    this.signal = computed(() => controlsToValue(this.controls));
 
     this.dirty = computed(() =>
       verifyAnyTrueInControls(this._controls, 'dirty')
@@ -96,7 +96,7 @@ export class FormGroup<C extends AngularFormControls = AngularFormControls>
     );
 
     this.errors = computed(() => {
-      this.value();
+      this.signal();
       const validators = this.validators();
 
       return validators
@@ -119,8 +119,8 @@ export class FormGroup<C extends AngularFormControls = AngularFormControls>
     return this._controls;
   }
 
-  public get data(): AngularControlsValue<C> {
-    return this.value();
+  public get value(): AngularControlsValue<C> {
+    return this.signal();
   }
 
   public setValue(value: Partial<AngularControlsValue<C>>): void {

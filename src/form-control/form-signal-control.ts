@@ -68,11 +68,11 @@ export class FormSignalControl<T = any> implements AngularControl<T> {
     return this.signals.invalid;
   }
 
-  public get value(): Signal<T> {
+  public get signal(): Signal<T> {
     return this.signals.value;
   }
 
-  public get data(): T {
+  public get value(): T {
     return this.signals.value();
   }
 

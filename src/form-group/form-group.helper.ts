@@ -61,8 +61,8 @@ export const formGroupIsValid = <C extends AbstractAngularControls>({
 export const controlsToSignal = <C extends AbstractAngularControls>(
   controls: C
 ): AngularControlsSignal<C> => {
-  return Object.entries(controls).reduce((result, [key, { value }]) => {
-    result[key as keyof C] = value;
+  return Object.entries(controls).reduce((result, [key, { signal }]) => {
+    result[key as keyof C] = signal;
 
     return result;
   }, {} as AngularControlsSignal<C>);
@@ -72,7 +72,7 @@ export const controlsToValue = <C extends AbstractAngularControls>(
   controls: C
 ): AngularControlsValue<C> => {
   return Object.entries(controls).reduce((result, [key, { value }]) => {
-    result[key as keyof C] = value();
+    result[key as keyof C] = value;
 
     return result;
   }, {} as AngularControlsValue<C>);

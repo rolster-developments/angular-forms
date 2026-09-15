@@ -22,7 +22,7 @@ import { AngularArrayControl } from './form-array-control.type';
 import {
   AbstractAngularArrayControls,
   AbstractAngularArrayGroup,
-  AngularArrayControlsSignal
+  AngularArrayControlsData
 } from './form-array-group.type';
 
 type FormArrayControls<T extends AngularArrayControl = AngularArrayControl> =
@@ -47,7 +47,7 @@ export class FormArray<C extends FormArrayControls = FormArrayControls, R = any>
 
   public readonly controls: Signal<C[]>;
 
-  public readonly value: Signal<AngularArrayControlsSignal<C>[]>;
+  public readonly signal: Signal<AngularArrayControlsData<C>[]>;
 
   public readonly enabled: Signal<boolean>;
 
@@ -99,7 +99,7 @@ export class FormArray<C extends FormArrayControls = FormArrayControls, R = any>
       return this.groups$().map(({ controls }) => controls);
     });
 
-    this.value = computed(() => this.groups$().map(({ value }) => value()));
+    this.signal = computed(() => this.groups$().map(({ value }) => value));
 
     this.disabled$ = signal(false);
 
@@ -163,8 +163,8 @@ export class FormArray<C extends FormArrayControls = FormArrayControls, R = any>
     return this.groups$;
   }
 
-  public get data(): AngularArrayControlsSignal<C>[] {
-    return this.value();
+  public get value(): AngularArrayControlsData<C>[] {
+    return this.signal();
   }
 
   public get disabled(): Signal<boolean> {

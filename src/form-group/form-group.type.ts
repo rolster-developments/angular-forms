@@ -18,11 +18,11 @@ export type ValidatorGroupFn<
 > = (controls: C) => ValidatorResult<V>;
 
 export type AngularControlsSignal<C extends AbstractAngularControls> = {
-  [K in keyof C]: C[K]['value'];
+  [K in keyof C]: C[K]['signal'];
 };
 
 export type AngularControlsValue<C extends AbstractAngularControls> = {
-  [K in keyof C]: C[K]['data'];
+  [K in keyof C]: C[K]['value'];
 };
 
 export interface AngularFormGroupOptions<
@@ -36,7 +36,6 @@ export interface AbstractAngularFormGroup<
   C extends AbstractAngularControls = AbstractAngularControls
 > {
   readonly controls: C;
-  readonly data: AngularControlsValue<C>;
   readonly dirties: Signal<boolean>;
   readonly dirty: Signal<boolean>;
   readonly error: Signal<ValidatorError | undefined>;
@@ -47,11 +46,12 @@ export interface AbstractAngularFormGroup<
   reset: () => void;
   setValidators: (validators: ValidatorGroupFn<C>[]) => void;
   setValue(value: Partial<AngularControlsValue<C>>): void;
+  readonly signal: Signal<AngularControlsValue<C>>;
   readonly touched: Signal<boolean>;
   readonly toucheds: Signal<boolean>;
   readonly untouched: Signal<boolean>;
   readonly untoucheds: Signal<boolean>;
   readonly valid: Signal<boolean>;
-  readonly value: Signal<AngularControlsValue<C>>;
+  readonly value: AngularControlsValue<C>;
   readonly wrong: Signal<boolean>;
 }

@@ -18,11 +18,11 @@ export type AngularArrayControls<
 
 export type AngularArrayControlsSignal<C extends AbstractAngularArrayControls> =
   {
-    [K in keyof C]: C[K]['value'];
+    [K in keyof C]: C[K]['signal'];
   };
 
 export type AngularArrayControlsData<C extends AbstractAngularArrayControls> = {
-  [K in keyof C]: C[K]['data'];
+  [K in keyof C]: C[K]['value'];
 };
 
 export interface AngularFormArrayGroupOptions<

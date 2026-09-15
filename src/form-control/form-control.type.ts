@@ -2,7 +2,6 @@ import { Signal } from '@angular/core';
 import { ValidatorError, ValidatorFn } from '@rolster/validators';
 
 export interface AbstractAngularControl<T = any> {
-  readonly data: T;
   readonly dirty: Signal<boolean>;
   readonly disabled: Signal<boolean>;
   readonly enabled: Signal<boolean>;
@@ -12,11 +11,12 @@ export interface AbstractAngularControl<T = any> {
   readonly invalid: Signal<boolean>;
   readonly pristine: Signal<boolean>;
   reset: () => void;
+  readonly signal: Signal<T>;
   someErrors: (key: string[]) => boolean;
   readonly touched: Signal<boolean>;
   readonly untouched: Signal<boolean>;
   readonly valid: Signal<boolean>;
-  readonly value: Signal<T>;
+  readonly value: T;
   readonly wrong: Signal<boolean>;
 }
 

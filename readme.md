@@ -8,6 +8,8 @@ It implements a set of classes that allow managing the control of states of the 
 npm i @rolster/angular-forms
 ```
 
+Requires **Angular 20 or higher** (`^20 || ^21 || ^22`) and **Node 22 or higher**.
+
 ## Configuration
 
 You must install the `@rolster/types` to define package data types, which are configured by adding them to the `files` property of the `tsconfig.json` file.
@@ -20,7 +22,7 @@ You must install the `@rolster/types` to define package data types, which are co
 
 ## Features
 
-The Angular adaptation of [`@rolster/forms`](https://www.npmjs.com/package/@rolster/forms), rewritten on top of **signals**. It keeps the same vocabulary — **controls**, **groups** and **arrays** — and the same validators from [`@rolster/validators`](https://www.npmjs.com/package/@rolster/validators), but every state member (`value`, `errors`, `valid`, `dirty`, `touched`, `disabled`, …) is a `Signal`, so templates, `computed` and `effect` react to a change automatically and there is no `subscribe` to manage.
+The Angular adaptation of [`@rolster/forms`](https://www.npmjs.com/package/@rolster/forms), rewritten on top of **signals**. It keeps the same vocabulary — **controls**, **groups** and **arrays** — and the same validators from [`@rolster/validators`](https://www.npmjs.com/package/@rolster/validators), but every state member (`signal`, `errors`, `valid`, `dirty`, `touched`, `disabled`, …) is a `Signal`, so templates, `computed` and `effect` react to a change automatically and there is no `subscribe` to manage.
 
 There is nothing to import into a module: no `NgModule`, no directives, no providers. The building blocks are plain classes you instantiate as a field of the component, which also means they work with `ChangeDetectionStrategy.OnPush` and zoneless applications without any extra setup.
 
@@ -39,9 +41,10 @@ Each building block has a class and a matching factory function (the factory is 
 
 A control holds a value, its validators and a rich set of state signals. Both the constructor and the factory accept an options object (`{ value, validators? }`), the positional `(value, validators?)` pair, or nothing at all — in which case the value type is `T | undefined` (the `FormVoid<T>` alias).
 
-| Signal                  | Description                                                        |
+| Member                  | Description                                                        |
 | ----------------------- | ------------------------------------------------------------------ |
-| `value`                 | `Signal<T>` with the current value                                 |
+| `signal`                | `Signal<T>` with the current value                                 |
+| `value`                 | `T`: the current value, outside a reactive context                 |
 | `errors` / `error`      | `ValidatorError[]` of the failed validators / the first one        |
 | `valid` / `invalid`     | Whether every validator passes                                     |
 | `dirty` / `pristine`    | Whether the value was changed through `setValue`                   |
@@ -50,7 +53,7 @@ A control holds a value, its validators and a rich set of state signals. Both th
 | `disabled` / `enabled`  | Whether the control is disabled                                    |
 | `wrong`                 | `touched() && invalid()`, ideal for showing an error in a template |
 
-`data` is the only member that is not a signal: it is a shortcut for `value()`, handy when reading the control outside a reactive context.
+`value` is the only member that is not a signal: it is a shortcut for `signal()`, so `control.value` and `control.signal()` always return the same thing. Read it from an event handler or a service; read the signal from a template, a `computed` or an `effect`.
 
 **Methods:** `setValue(value)` (marks the control dirty), `setStartValue(value)` (updates the value without marking it dirty), `setDefaultValue(value)` (also replaces the value restored by `reset()`), `setValidators(validators)`, `reset()`, `disable()` / `enable()`, `focus()` / `blur()`, `touch()`, `hasError(id)`, `someErrors(ids)`.
 
@@ -61,14 +64,14 @@ import { email, required } from '@rolster/validators/helpers';
 
 const emailControl = formControl('', [required, email]);
 
-emailControl.value(); // ''
+emailControl.signal(); // ''
 emailControl.valid(); // false
 emailControl.error(); // { id: 'required', message: 'Field is required' }
 
 emailControl.setValue('daniel@rolster.com');
 emailControl.valid(); // true
 
-// Every member is a signal, so it composes with the rest of Angular
+// Every state member is a signal, so it composes with the rest of Angular
 const message = computed(() =>
   emailControl.wrong() ? emailControl.error()?.message : undefined
 );
@@ -81,7 +84,7 @@ A group binds several named controls together and derives its aggregate state fr
 | Member                     | Description                                                   |
 | -------------------------- | ------------------------------------------------------------- |
 | `controls`                 | The controls record (a plain object, not a signal)            |
-| `value` / `data`           | `Signal` with the `{ key: value }` object / its current value |
+| `signal` / `value`         | `Signal` with the `{ key: value }` object / its current value |
 | `errors` / `error`         | Errors of the group validators                                |
 | `valid` / `invalid`        | Group validators pass **and** every control is valid          |
 | `dirty` / `dirties`        | Any control / every control is dirty                          |
@@ -112,7 +115,7 @@ export class LoginComponent {
   }
 
   public onSubmit(): void {
-    const { email, password } = this.formLogin.data;
+    const { email, password } = this.formLogin.value;
 
     this.authService.login(email, password);
   }
@@ -123,7 +126,7 @@ export class LoginComponent {
 <form (ngSubmit)="onSubmit()">
   <input
     type="email"
-    [value]="controls.email.value()"
+    [value]="controls.email.signal()"
     (blur)="controls.email.blur()"
     (focus)="controls.email.focus()"
     (input)="controls.email.setValue($any($event.target).value)"
@@ -134,7 +137,7 @@ export class LoginComponent {
 
   <input
     type="password"
-    [value]="controls.password.value()"
+    [value]="controls.password.signal()"
     (blur)="controls.password.blur()"
     (input)="controls.password.setValue($any($event.target).value)"
   />
@@ -148,7 +151,7 @@ export class LoginComponent {
 
 A `FormArray` manages a dynamic list of group items, perfect for repeatable sections such as "add another phone". Each item is a `FormArrayGroup` with a stable `uuid`, and its controls must be created with `formArrayControl` (a `FormControl` that also carries a `uuid`).
 
-Besides the aggregate signals of a group — `dirty`/`dirties`, `pristine`/`pristines`, `touched`/`toucheds`, `untouched`/`untoucheds`, `valid`/`invalid`, `errors`/`error`, `wrong`, `disabled`/`enabled` — it exposes `groups` (`Signal<G[]>`), `controls` (`Signal<C[]>`) and `value`, plus the methods `push(group)`, `merge(groups)`, `remove(group)`, `findByUuid(uuid)`, `setValue(groups)`, `setStartValue(groups)`, `setDefaultValue(groups)`, `setValidators(validators)`, `disable()` / `enable()`, `hasError(id)`, `someErrors(ids)` and `reset()`.
+Besides the aggregate signals of a group — `dirty`/`dirties`, `pristine`/`pristines`, `touched`/`toucheds`, `untouched`/`untoucheds`, `valid`/`invalid`, `errors`/`error`, `wrong`, `disabled`/`enabled` — it exposes `groups` (`Signal<G[]>`), `controls` (`Signal<C[]>`), `signal` and `value`, plus the methods `push(group)`, `merge(groups)`, `remove(group)`, `findByUuid(uuid)`, `setValue(groups)`, `setStartValue(groups)`, `setDefaultValue(groups)`, `setValidators(validators)`, `disable()` / `enable()`, `hasError(id)`, `someErrors(ids)` and `reset()`.
 
 ```typescript
 import { Component } from '@angular/core';
@@ -194,7 +197,7 @@ export class PhonesComponent {
 @for (group of formPhones.groups(); track group.uuid) {
 <div>
   <input
-    [value]="group.controls.number.value()"
+    [value]="group.controls.number.signal()"
     (blur)="group.controls.number.blur()"
     (input)="group.controls.number.setValue($any($event.target).value)"
   />
@@ -238,13 +241,13 @@ const tags = formArrayList<TagControls>(
   [{ name: 'forms' }]
 );
 
-tags.value(); // [{ name: 'forms' }]
+tags.signal(); // [{ name: 'forms' }]
 tags.push({ name: formArrayControl('signals') });
 tags.controls().length; // 2
 tags.remove(tags.controls()[0]);
 ```
 
-`controls` is a `Signal<C[]>`, and `touched`, `dirty`, `value` and `errors` are derived from the controls of every item, so the list state stays in sync without any extra wiring.
+`controls` is a `Signal<C[]>`, and `touched`, `dirty`, `signal` and `errors` are derived from the controls of every item, so the list state stays in sync without any extra wiring.
 
 ### Validators
 
@@ -293,7 +296,7 @@ const passwordsMatch: ValidatorGroupFn<PasswordControls> = ({
   password,
   confirmation
 }) =>
-  password.data === confirmation.data
+  password.value === confirmation.value
     ? undefined
     : { id: 'passwords', message: 'Passwords do not match' };
 
@@ -307,21 +310,38 @@ const formPassword = formGroup(
 
 | Type                                   | Description                                                           |
 | -------------------------------------- | --------------------------------------------------------------------- |
+| `AbstractAngularControl<T>`            | Base contract of a control: `signal`, `value` and the state signals.  |
 | `AngularFormControl<T>`                | Contract of a control: signals, `setValue`, `focus`/`blur`.           |
 | `AngularControl<T>` / `AngularVoid<T>` | Alias of the contract / the same with `T \| undefined` as value.      |
 | `AngularFormControls<T>`               | Record of controls: the shape accepted by `formGroup`.                |
 | `AngularFormGroupOptions<C>`           | `{ controls, validators? }` accepted by `formGroup`.                  |
 | `AbstractAngularFormGroup<C>`          | Contract of a group: `controls`, aggregated signals, `setValue`.      |
-| `AngularControlsValue<C>`              | The `{ key: value }` object exposed by `group.value()`.               |
+| `AngularControlsValue<C>`              | The `{ key: value }` object exposed by `group.value`.                 |
+| `AngularControlsSignal<C>`             | The `{ key: Signal }` object built from each control's `signal`.      |
 | `ValidatorGroupFn<C>`                  | A group validator: receives the `controls`.                           |
 | `AngularArrayControl<T>`               | Contract of a control with `uuid`; implemented by `FormArrayControl`. |
 | `AngularArrayControls<T>`              | Record of array controls: the controls shape of an array item.        |
+| `AngularArrayControlsData<C>`          | The `{ key: value }` object of a single array item.                   |
+| `AbstractAngularArray<C, R>`           | Contract of a `FormArray`: `groups`, `controls`, `push`/`remove`.     |
 | `AbstractAngularArrayGroup<C, R>`      | Contract of an item of a `FormArray`, with `uuid` and `resource`.     |
 | `AngularFormArrayGroupOptions<C, R>`   | `{ controls, validators?, resource?, uuid }` of an array item.        |
 | `AngularArrayList<C>`                  | Contract of a `FormArrayList`: `controls`, `push`, `remove`.          |
 | `AngularArrayListValueToControls<C>`   | The `(value) => controls` function a `formArrayList` is built with.   |
 
 The classes themselves are exported too — `FormControl` / `FormVoid`, `FormGroup`, `FormArray`, `FormArrayGroup`, `FormArrayControl` / `FormArrayVoid`, `FormArrayControls` and `FormArrayList` — and are usually the ones you name in a component field or a helper signature. The `*Void` aliases are the same type with `T | undefined` as value, which is what a control created without an initial value returns.
+
+## Migrating from 22.x
+
+Every control, group and array renamed the two members that expose the value, so the package now reads the same as [`@rolster/react-forms`](https://www.npmjs.com/package/@rolster/react-forms), where `value` is always the plain value.
+
+| 22.x              | 23.x               | Type                              |
+| ----------------- | ------------------ | --------------------------------- |
+| `control.value()` | `control.signal()` | `Signal<T>`                       |
+| `control.data`    | `control.value`    | `T`                               |
+| `group.value()`   | `group.signal()`   | `Signal<AngularControlsValue<C>>` |
+| `group.data`      | `group.value`      | `AngularControlsValue<C>`         |
+
+The mapped types follow the same move: `AngularControlsSignal<C>` now indexes `signal`, and `AngularControlsValue<C>` indexes `value`. In a template the change is mechanical — `[value]="controls.email.value()"` becomes `[value]="controls.email.signal()"`.
 
 ## Contributing
 
