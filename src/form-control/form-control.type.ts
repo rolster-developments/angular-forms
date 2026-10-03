@@ -1,4 +1,5 @@
 import { Signal } from '@angular/core';
+import { FormatOn, FormatterFn } from '@rolster/forms';
 import { ValidatorError, ValidatorFn } from '@rolster/validators';
 
 export interface AbstractAngularControl<T = any> {
@@ -32,6 +33,8 @@ export interface AngularFormControl<T = any> extends AbstractAngularControl<T> {
   setValue: (value: T) => void;
   touch: () => void;
   readonly unfocused: Signal<boolean>;
+  readonly formatOn?: FormatOn;
+  readonly formatter?: FormatterFn<T>;
 }
 
 export type AngularControl<T = any> = AngularFormControl<T>;

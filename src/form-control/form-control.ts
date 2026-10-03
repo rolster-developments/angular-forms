@@ -6,6 +6,7 @@ import {
 } from '@rolster/forms';
 import {
   createFormControlOptions,
+  formatInputValue,
   formControlIsValid
 } from '@rolster/forms/helpers';
 import { ValidatorFn } from '@rolster/validators';
@@ -26,7 +27,9 @@ export class FormControl<T = any> extends FormSignalControl<T> {
     const dirty = signal(false);
     const disabled = signal(false);
 
-    const valueSignal = signal(formControl.value);
+    const value = formatInputValue(formControl.value, formControl);
+
+    const valueSignal = signal(value);
     const validatorsSignal = signal(formControl.validators);
 
     const errors = computed(() => {
@@ -38,23 +41,27 @@ export class FormControl<T = any> extends FormSignalControl<T> {
 
     const valid = computed(() => errors().length === 0);
 
-    super(formControl.value, {
-      dirty,
-      disabled,
-      enabled: computed(() => !disabled()),
-      error: computed(() => errors()[0]),
-      errors,
-      focused,
-      invalid: computed(() => !valid()),
-      pristine: computed(() => !dirty()),
-      touched,
-      unfocused: computed(() => !focused()),
-      untouched: computed(() => !touched()),
-      valid,
-      value: valueSignal,
-      validators: validatorsSignal,
-      wrong: computed(() => touched() && !valid())
-    });
+    super(
+      value,
+      {
+        dirty,
+        disabled,
+        enabled: computed(() => !disabled()),
+        error: computed(() => errors()[0]),
+        errors,
+        focused,
+        invalid: computed(() => !valid()),
+        pristine: computed(() => !dirty()),
+        touched,
+        unfocused: computed(() => !focused()),
+        untouched: computed(() => !touched()),
+        valid,
+        value: valueSignal,
+        validators: validatorsSignal,
+        wrong: computed(() => touched() && !valid())
+      },
+      formControl
+    );
   }
 }
 

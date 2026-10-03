@@ -39,19 +39,20 @@ Each building block has a class and a matching factory function (the factory is 
 
 ### FormControl
 
-A control holds a value, its validators and a rich set of state signals. Both the constructor and the factory accept an options object (`{ value, validators? }`), the positional `(value, validators?)` pair, or nothing at all — in which case the value type is `T | undefined` (the `FormVoid<T>` alias).
+A control holds a value, its validators and a rich set of state signals. Both the constructor and the factory accept an options object (`{ value, validators?, formatter?, formatOn? }`), the positional `(value, validators?)` pair, or nothing at all — in which case the value type is `T | undefined` (the `FormVoid<T>` alias).
 
-| Member                  | Description                                                        |
-| ----------------------- | ------------------------------------------------------------------ |
-| `signal`                | `Signal<T>` with the current value                                 |
-| `value`                 | `T`: the current value, outside a reactive context                 |
-| `errors` / `error`      | `ValidatorError[]` of the failed validators / the first one        |
-| `valid` / `invalid`     | Whether every validator passes                                     |
-| `dirty` / `pristine`    | Whether the value was changed through `setValue`                   |
-| `touched` / `untouched` | Whether the field was interacted with (`touch()` / `blur()`)       |
-| `focused` / `unfocused` | Whether the field is focused (`focus()` / `blur()`)                |
-| `disabled` / `enabled`  | Whether the control is disabled                                    |
-| `wrong`                 | `touched() && invalid()`, ideal for showing an error in a template |
+| Member                   | Description                                                        |
+| ------------------------ | ------------------------------------------------------------------ |
+| `signal`                 | `Signal<T>` with the current value                                 |
+| `value`                  | `T`: the current value, outside a reactive context                 |
+| `errors` / `error`       | `ValidatorError[]` of the failed validators / the first one        |
+| `valid` / `invalid`      | Whether every validator passes                                     |
+| `dirty` / `pristine`     | Whether the value was changed through `setValue`                   |
+| `touched` / `untouched`  | Whether the field was interacted with (`touch()` / `blur()`)       |
+| `focused` / `unfocused`  | Whether the field is focused (`focus()` / `blur()`)                |
+| `disabled` / `enabled`   | Whether the control is disabled                                    |
+| `wrong`                  | `touched() && invalid()`, ideal for showing an error in a template |
+| `formatter` / `formatOn` | The formatter options the control was created with (not signals)   |
 
 `value` is the only member that is not a signal: it is a shortcut for `signal()`, so `control.value` and `control.signal()` always return the same thing. Read it from an event handler or a service; read the signal from a template, a `computed` or an `effect`.
 
@@ -76,6 +77,35 @@ const message = computed(() =>
   emailControl.wrong() ? emailControl.error()?.message : undefined
 );
 ```
+
+#### Formatter
+
+`formatter` is a pure `(value: T) => T` function that normalizes the value before it reaches the `signal`, so validators, `computed`s and templates always see the formatted result. `formatOn` decides when it runs: `'input'` (the default) applies it to the initial value and to every `setValue`, `setStartValue` and `setDefaultValue`; `'blur'` keeps the raw value while the user types and applies it when `blur()` is called. Because signals compare with `Object.is`, a formatter that rejects a character leaves the signal untouched and nothing re-renders.
+
+```typescript
+import { formControl } from '@rolster/angular-forms';
+
+const phone = formControl({
+  value: '',
+  formatter: (value: string) => value.replace(/\D/g, '')
+});
+
+phone.setValue('30a1');
+phone.value; // '301'
+
+const name = formControl({
+  value: '',
+  formatter: (value: string) => value.trim(),
+  formatOn: 'blur'
+});
+
+name.setValue(' Ana ');
+name.value; // ' Ana '
+name.blur();
+name.value; // 'Ana'
+```
+
+The function must be **idempotent**, because the field components of `@rolster/angular-components` apply it before writing the DOM and the control applies it again. `FormArrayControl` accepts the same two options.
 
 ### FormGroup
 

@@ -1,5 +1,11 @@
 import { Signal } from '@angular/core';
-import { hasError, someErrors } from '@rolster/forms/helpers';
+import { FormatOn, FormatterFn, FormatterOptions } from '@rolster/forms';
+import {
+  formatBlurValue,
+  formatInputValue,
+  hasError,
+  someErrors
+} from '@rolster/forms/helpers';
 import { ValidatorError, ValidatorFn } from '@rolster/validators';
 import { setValueInSignal } from './form-control.helper';
 import { AngularControl } from './form-control.type';
@@ -23,10 +29,18 @@ export interface SignalControlOptions<T = any> {
 }
 
 export class FormSignalControl<T = any> implements AngularControl<T> {
+  public readonly formatter?: FormatterFn<T>;
+
+  public readonly formatOn?: FormatOn;
+
   protected constructor(
     protected defaultValue: T,
-    protected readonly signals: SignalControlOptions<T>
-  ) {}
+    protected readonly signals: SignalControlOptions<T>,
+    format: FormatterOptions<T> = {}
+  ) {
+    this.formatter = format.formatter;
+    this.formatOn = format.formatOn;
+  }
 
   public get focused(): Signal<boolean> {
     return this.signals.focused;
@@ -109,6 +123,12 @@ export class FormSignalControl<T = any> implements AngularControl<T> {
   public blur(): void {
     setValueInSignal(this.signals.focused, false);
     setValueInSignal(this.signals.touched, true);
+
+    const value = formatBlurValue(this.value, this);
+
+    if (!Object.is(value, this.value)) {
+      setValueInSignal(this.signals.value, value);
+    }
   }
 
   public disable(): void {
@@ -124,17 +144,17 @@ export class FormSignalControl<T = any> implements AngularControl<T> {
   }
 
   public setDefaultValue(value: T): void {
-    this.defaultValue = value;
-    setValueInSignal(this.signals.value, value);
+    this.defaultValue = formatInputValue(value, this);
+    setValueInSignal(this.signals.value, this.defaultValue);
   }
 
   public setStartValue(value: T): void {
-    setValueInSignal(this.signals.value, value);
+    setValueInSignal(this.signals.value, formatInputValue(value, this));
   }
 
   public setValue(value: T): void {
     setValueInSignal(this.signals.dirty, true);
-    setValueInSignal(this.signals.value, value);
+    setValueInSignal(this.signals.value, formatInputValue(value, this));
   }
 
   public setValidators(validators: ValidatorFn<T>[] = []): void {
