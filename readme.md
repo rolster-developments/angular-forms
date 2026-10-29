@@ -362,4 +362,4 @@ The classes themselves are exported too — `FormControl` / `FormVoid`, `FormGro
 
 ## Contributing
 
-- Daniel Andrés Castillo Pedroza :rocket:
+:sparkles: Daniel Andrés Castillo Pedroza
