@@ -1,42 +1,62 @@
-import { Signal } from '@angular/core';
-import { FormatOn, FormatterFn } from '@rolster/forms';
+import { ElementRef, Signal } from '@angular/core';
+import { AbstractFormControl, AbstractValueControl } from '@rolster/forms';
 import { ValidatorError, ValidatorFn } from '@rolster/validators';
 
-export interface AbstractAngularControl<T = any> {
+export interface ControlSignals<T = any> {
   readonly dirty: Signal<boolean>;
   readonly disabled: Signal<boolean>;
   readonly enabled: Signal<boolean>;
   readonly error: Signal<ValidatorError | undefined>;
   readonly errors: Signal<ValidatorError[]>;
-  hasError: (key: string) => boolean;
+  readonly focused: Signal<boolean>;
   readonly invalid: Signal<boolean>;
   readonly pristine: Signal<boolean>;
-  reset: () => void;
-  readonly signal: Signal<T>;
-  someErrors: (key: string[]) => boolean;
   readonly touched: Signal<boolean>;
+  readonly unfocused: Signal<boolean>;
   readonly untouched: Signal<boolean>;
   readonly valid: Signal<boolean>;
-  readonly value: T;
+  readonly validators: Signal<ValidatorFn<T>[] | undefined>;
+  readonly value: Signal<T>;
   readonly wrong: Signal<boolean>;
 }
 
-export interface AngularFormControl<T = any> extends AbstractAngularControl<T> {
-  blur: () => void;
-  disable: () => void;
-  enable: () => void;
-  focus: () => void;
-  readonly focused: Signal<boolean>;
-  setDefaultValue: (value: T) => void;
-  setStartValue: (value: T) => void;
-  setValidators: (validators?: ValidatorFn<T>[]) => void;
-  setValue: (value: T) => void;
-  touch: () => void;
-  readonly unfocused: Signal<boolean>;
-  readonly formatOn?: FormatOn;
-  readonly formatter?: FormatterFn<T>;
+export type ValueSetter<T> = (current: T) => T;
+
+export type AngularValueSetter<T> = (value: T | ValueSetter<T>) => void;
+
+export interface AngularAbstractControl<
+  T = any,
+  E extends HTMLElement = HTMLElement
+> extends AbstractValueControl<T> {
+  readonly signal: Signal<T>;
+  elementRef?: ElementRef<E>;
 }
 
-export type AngularControl<T = any> = AngularFormControl<T>;
+export interface AngularFormControl<
+  T = any,
+  E extends HTMLElement = HTMLElement
+> extends AbstractFormControl<T> {
+  setValue: AngularValueSetter<T>;
+  readonly signal: Signal<T>;
+  readonly signals: ControlSignals<T>;
+  elementRef?: ElementRef<E>;
+  readonly validators?: ValidatorFn<T>[];
+}
 
-export type AngularVoid<T = any> = AngularControl<T | undefined>;
+export type AngularFormVoid<
+  T = any,
+  E extends HTMLElement = HTMLElement
+> = AngularFormControl<T | undefined, E>;
+
+export type AngularHtmlControl<T = any> = AngularFormControl<T, HTMLElement>;
+export type AngularHtmlVoid<T = any> = AngularFormVoid<T, HTMLElement>;
+export type AngularInputControl<T = any> = AngularFormControl<
+  T,
+  HTMLInputElement
+>;
+export type AngularAreaControl = AngularFormControl<
+  string,
+  HTMLTextAreaElement
+>;
+export type AngularInputVoid<T = any> = AngularFormVoid<T, HTMLInputElement>;
+export type AngularAreaVoid = AngularFormVoid<string, HTMLTextAreaElement>;

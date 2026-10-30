@@ -1,163 +1,221 @@
-import { Signal } from '@angular/core';
+import { computed, ElementRef, Signal, WritableSignal } from '@angular/core';
 import { FormatOn, FormatterFn, FormatterOptions } from '@rolster/forms';
 import {
   formatBlurValue,
   formatInputValue,
+  formControlIsValid,
   hasError,
   someErrors
 } from '@rolster/forms/helpers';
 import { ValidatorError, ValidatorFn } from '@rolster/validators';
-import { setValueInSignal } from './form-control.helper';
-import { AngularControl } from './form-control.type';
+import {
+  AngularFormControl,
+  ControlSignals,
+  ValueSetter
+} from './form-control.type';
 
-export interface SignalControlOptions<T = any> {
-  readonly dirty: Signal<boolean>;
-  readonly disabled: Signal<boolean>;
-  readonly enabled: Signal<boolean>;
-  readonly error: Signal<ValidatorError | undefined>;
-  readonly errors: Signal<ValidatorError[]>;
-  readonly focused: Signal<boolean>;
-  readonly invalid: Signal<boolean>;
-  readonly pristine: Signal<boolean>;
-  readonly touched: Signal<boolean>;
-  readonly unfocused: Signal<boolean>;
-  readonly untouched: Signal<boolean>;
-  readonly valid: Signal<boolean>;
-  readonly validators: Signal<ValidatorFn<T>[] | undefined>;
+export interface SignalControlState<T = any> {
+  readonly dirty: WritableSignal<boolean>;
+  readonly disabled: WritableSignal<boolean>;
+  readonly focused: WritableSignal<boolean>;
+  readonly touched: WritableSignal<boolean>;
+  readonly validators: WritableSignal<ValidatorFn<T>[] | undefined>;
   readonly value: Signal<T>;
-  readonly wrong: Signal<boolean>;
+  readonly errors?: Signal<ValidatorError[]>;
+  readonly valid?: Signal<boolean>;
 }
 
-export class FormSignalControl<T = any> implements AngularControl<T> {
+function valueIsSetter<T>(value: T | ValueSetter<T>): value is ValueSetter<T> {
+  return typeof value === 'function';
+}
+
+export abstract class FormSignalControl<
+  T = any,
+  E extends HTMLElement = HTMLElement
+> implements AngularFormControl<T, E>
+{
   public readonly formatter?: FormatterFn<T>;
 
   public readonly formatOn?: FormatOn;
 
+  public elementRef?: ElementRef<E>;
+
+  protected controlSignals: ControlSignals<T>;
+
   protected constructor(
     protected defaultValue: T,
-    protected readonly signals: SignalControlOptions<T>,
+    protected readonly state: SignalControlState<T>,
     format: FormatterOptions<T> = {}
   ) {
     this.formatter = format.formatter;
     this.formatOn = format.formatOn;
+
+    const errors =
+      state.errors ??
+      computed(() => {
+        const validators = state.validators();
+        const value = state.value();
+
+        return validators ? formControlIsValid({ value, validators }) : [];
+      });
+
+    const valid = state.valid ?? computed(() => errors().length === 0);
+
+    this.controlSignals = {
+      dirty: state.dirty.asReadonly(),
+      disabled: state.disabled.asReadonly(),
+      enabled: computed(() => !state.disabled()),
+      error: computed(() => errors()[0]),
+      errors,
+      focused: state.focused.asReadonly(),
+      invalid: computed(() => !valid()),
+      pristine: computed(() => !state.dirty()),
+      touched: state.touched.asReadonly(),
+      unfocused: computed(() => !state.focused()),
+      untouched: computed(() => !state.touched()),
+      valid,
+      validators: state.validators.asReadonly(),
+      value: state.value,
+      wrong: computed(() => state.touched() && !valid())
+    };
   }
 
-  public get focused(): Signal<boolean> {
-    return this.signals.focused;
-  }
-
-  public get unfocused(): Signal<boolean> {
-    return this.signals.unfocused;
-  }
-
-  public get touched(): Signal<boolean> {
-    return this.signals.touched;
-  }
-
-  public get untouched(): Signal<boolean> {
-    return this.signals.untouched;
-  }
-
-  public get dirty(): Signal<boolean> {
-    return this.signals.dirty;
-  }
-
-  public get pristine(): Signal<boolean> {
-    return this.signals.pristine;
-  }
-
-  public get disabled(): Signal<boolean> {
-    return this.signals.disabled;
-  }
-
-  public get enabled(): Signal<boolean> {
-    return this.signals.enabled;
-  }
-
-  public get valid(): Signal<boolean> {
-    return this.signals.valid;
-  }
-
-  public get invalid(): Signal<boolean> {
-    return this.signals.invalid;
+  public get signals(): ControlSignals<T> {
+    return this.controlSignals;
   }
 
   public get signal(): Signal<T> {
-    return this.signals.value;
+    return this.controlSignals.value;
   }
 
   public get value(): T {
-    return this.signals.value();
+    return this.controlSignals.value();
   }
 
-  public get errors(): Signal<ValidatorError[]> {
-    return this.signals.errors;
+  public get validators(): ValidatorFn<T>[] | undefined {
+    return this.controlSignals.validators();
   }
 
-  public get error(): Signal<ValidatorError | undefined> {
-    return this.signals.error;
+  public get focused(): boolean {
+    return this.controlSignals.focused();
   }
 
-  public get wrong(): Signal<boolean> {
-    return this.signals.wrong;
+  public get unfocused(): boolean {
+    return this.controlSignals.unfocused();
+  }
+
+  public get touched(): boolean {
+    return this.controlSignals.touched();
+  }
+
+  public get untouched(): boolean {
+    return this.controlSignals.untouched();
+  }
+
+  public get dirty(): boolean {
+    return this.controlSignals.dirty();
+  }
+
+  public get pristine(): boolean {
+    return this.controlSignals.pristine();
+  }
+
+  public get disabled(): boolean {
+    return this.controlSignals.disabled();
+  }
+
+  public get enabled(): boolean {
+    return this.controlSignals.enabled();
+  }
+
+  public get valid(): boolean {
+    return this.controlSignals.valid();
+  }
+
+  public get invalid(): boolean {
+    return this.controlSignals.invalid();
+  }
+
+  public get errors(): ValidatorError[] {
+    return this.controlSignals.errors();
+  }
+
+  public get error(): ValidatorError | undefined {
+    return this.controlSignals.error();
+  }
+
+  public get wrong(): boolean {
+    return this.controlSignals.wrong();
   }
 
   public hasError(key: string): boolean {
-    return hasError(this.errors(), key);
+    return hasError(this.errors, key);
   }
 
   public someErrors(keys: string[]): boolean {
-    return someErrors(this.errors(), keys);
+    return someErrors(this.errors, keys);
   }
 
   public reset(): void {
-    setValueInSignal(this.signals.touched, false);
-    setValueInSignal(this.signals.dirty, true);
-    setValueInSignal(this.signals.value, this.defaultValue);
+    this.state.dirty.set(false);
+    this.state.touched.set(false);
+    this.writeValue(this.defaultValue);
   }
 
   public focus(): void {
-    setValueInSignal(this.signals.focused, true);
+    this.state.focused.set(true);
   }
 
   public blur(): void {
-    setValueInSignal(this.signals.focused, false);
-    setValueInSignal(this.signals.touched, true);
+    this.state.focused.set(false);
+    this.state.touched.set(true);
 
     const value = formatBlurValue(this.value, this);
 
     if (!Object.is(value, this.value)) {
-      setValueInSignal(this.signals.value, value);
+      this.writeValue(value);
     }
   }
 
   public disable(): void {
-    setValueInSignal(this.signals.disabled, true);
+    this.state.disabled.set(true);
   }
 
   public enable(): void {
-    setValueInSignal(this.signals.disabled, false);
+    this.state.disabled.set(false);
   }
 
   public touch(): void {
-    setValueInSignal(this.signals.touched, true);
+    this.state.touched.set(true);
   }
 
   public setDefaultValue(value: T): void {
     this.defaultValue = formatInputValue(value, this);
-    setValueInSignal(this.signals.value, this.defaultValue);
+    this.writeValue(this.defaultValue);
   }
 
   public setStartValue(value: T): void {
-    setValueInSignal(this.signals.value, formatInputValue(value, this));
+    this.writeValue(formatInputValue(value, this));
   }
 
-  public setValue(value: T): void {
-    setValueInSignal(this.signals.dirty, true);
-    setValueInSignal(this.signals.value, formatInputValue(value, this));
+  public setValue(value: T | ValueSetter<T>): void {
+    const current = this.value;
+    const next = formatInputValue(
+      valueIsSetter(value) ? value(current) : value,
+      this
+    );
+
+    if (Object.is(next, current)) {
+      return;
+    }
+
+    this.state.dirty.set(true);
+    this.writeValue(next);
   }
 
-  public setValidators(validators: ValidatorFn<T>[] = []): void {
-    setValueInSignal(this.signals.validators, validators);
+  public setValidators(validators?: ValidatorFn<T>[]): void {
+    this.state.validators.set(validators);
   }
+
+  protected abstract writeValue(value: T): void;
 }

@@ -1,157 +1,198 @@
 import { computed, Signal, signal, WritableSignal } from '@angular/core';
-import { ValidatorError } from '@rolster/validators';
+import {
+  ControlsValue,
+  FormGroupOptions,
+  ValidatorGroupFn
+} from '@rolster/forms';
 import {
   controlsToValue,
   createFormGroupOptions,
   formGroupIsValid,
   verifyAllTrueInControls,
   verifyAnyTrueInControls
-} from './form-group.helper';
-import {
-  AbstractAngularFormGroup,
-  AngularControlsValue,
-  AngularFormControls,
-  AngularFormGroupOptions,
-  ValidatorGroupFn
-} from './form-group.type';
+} from '@rolster/forms/helpers';
+import { ValidatorError } from '@rolster/validators';
+import { AngularControls, AngularGroup, GroupSignals } from './form-group.type';
 
-export class FormGroup<C extends AngularFormControls = AngularFormControls>
-  implements AbstractAngularFormGroup<C>
+export class FormGroup<C extends AngularControls = AngularControls>
+  implements AngularGroup<C>
 {
-  private validGroup: Signal<boolean>;
+  private readonly validatorsState: WritableSignal<
+    ValidatorGroupFn<C>[] | undefined
+  >;
 
-  private validControls: Signal<boolean>;
+  protected readonly controlsState: C;
 
-  private validators: WritableSignal<ValidatorGroupFn<C>[] | undefined>;
+  protected groupSignals: GroupSignals<C>;
 
-  protected _controls: C;
-
-  public readonly signal: Signal<AngularControlsValue<C>>;
-
-  public readonly dirty: Signal<boolean>;
-
-  public readonly dirties: Signal<boolean>;
-
-  public readonly pristine: Signal<boolean>;
-
-  public readonly pristines: Signal<boolean>;
-
-  public readonly touched: Signal<boolean>;
-
-  public readonly toucheds: Signal<boolean>;
-
-  public readonly untouched: Signal<boolean>;
-
-  public readonly untoucheds: Signal<boolean>;
-
-  public readonly valid: Signal<boolean>;
-
-  public readonly invalid: Signal<boolean>;
-
-  public readonly errors: Signal<ValidatorError[]>;
-
-  public readonly error: Signal<ValidatorError | undefined>;
-
-  public readonly wrong: Signal<boolean>;
-
-  constructor(options: AngularFormGroupOptions<C>);
+  constructor(options: FormGroupOptions<C>);
   constructor(controls: C, validators?: ValidatorGroupFn<C>[]);
   constructor(
-    options: AngularFormGroupOptions<C> | C,
+    options: FormGroupOptions<C> | C,
     validators?: ValidatorGroupFn<C>[]
   ) {
-    const formGroup = createFormGroupOptions(options, validators);
-
-    this._controls = formGroup.controls;
-    this.validators = signal(formGroup.validators);
-
-    this.signal = computed(() => controlsToValue(this.controls));
-
-    this.dirty = computed(() =>
-      verifyAnyTrueInControls(this._controls, 'dirty')
+    const formGroup = createFormGroupOptions<C, FormGroupOptions<C>>(
+      options,
+      validators
     );
 
-    this.pristine = computed(() => !this.dirty());
+    this.controlsState = formGroup.controls;
+    this.validatorsState = signal(formGroup.validators);
 
-    this.dirties = computed(() =>
-      verifyAllTrueInControls(this._controls, 'dirty')
+    const value = computed(() => controlsToValue<C>(this.controlsState));
+
+    const dirty = computed(() =>
+      verifyAnyTrueInControls(this.controlsState, 'dirty')
     );
 
-    this.pristines = computed(() => !this.dirties());
-
-    this.touched = computed(() =>
-      verifyAnyTrueInControls(this._controls, 'touched')
+    const dirties = computed(() =>
+      verifyAllTrueInControls(this.controlsState, 'dirty')
     );
 
-    this.untouched = computed(() => !this.touched());
-
-    this.toucheds = computed(() =>
-      verifyAllTrueInControls(this._controls, 'touched')
+    const touched = computed(() =>
+      verifyAnyTrueInControls(this.controlsState, 'touched')
     );
 
-    this.untoucheds = computed(() => !this.toucheds());
-
-    this.validControls = computed(() =>
-      verifyAllTrueInControls(this._controls, 'valid')
+    const toucheds = computed(() =>
+      verifyAllTrueInControls(this.controlsState, 'touched')
     );
 
-    this.errors = computed(() => {
-      this.signal();
-      const validators = this.validators();
+    const validControls = computed(() =>
+      verifyAllTrueInControls(this.controlsState, 'valid')
+    );
+
+    const errors = computed(() => {
+      value();
+
+      const validators = this.validatorsState();
 
       return validators
-        ? formGroupIsValid({ controls: this.controls, validators })
+        ? formGroupIsValid({ controls: this.controlsState, validators })
         : [];
     });
 
-    this.validGroup = computed(() => this.errors().length === 0);
+    const valid = computed(() => errors().length === 0 && validControls());
 
-    this.error = computed(() => this.errors()[0]);
+    this.groupSignals = {
+      dirties,
+      dirty,
+      error: computed(() => errors()[0]),
+      errors,
+      invalid: computed(() => !valid()),
+      pristine: computed(() => !dirty()),
+      pristines: computed(() => !dirties()),
+      touched,
+      toucheds,
+      untouched: computed(() => !touched()),
+      untoucheds: computed(() => !toucheds()),
+      valid,
+      validators: this.validatorsState.asReadonly(),
+      value,
+      wrong: computed(() => touched() && !valid())
+    };
+  }
 
-    this.valid = computed(() => this.validGroup() && this.validControls());
+  public get signals(): GroupSignals<C> {
+    return this.groupSignals;
+  }
 
-    this.invalid = computed(() => !this.valid());
-
-    this.wrong = computed(() => this.touched() && this.invalid());
+  public get signal(): Signal<ControlsValue<C>> {
+    return this.groupSignals.value;
   }
 
   public get controls(): C {
-    return this._controls;
+    return this.controlsState;
   }
 
-  public get value(): AngularControlsValue<C> {
-    return this.signal();
+  public get value(): ControlsValue<C> {
+    return this.groupSignals.value();
   }
 
-  public setValue(value: Partial<AngularControlsValue<C>>): void {
+  public get validators(): ValidatorGroupFn<C>[] | undefined {
+    return this.groupSignals.validators();
+  }
+
+  public get dirty(): boolean {
+    return this.groupSignals.dirty();
+  }
+
+  public get dirties(): boolean {
+    return this.groupSignals.dirties();
+  }
+
+  public get pristine(): boolean {
+    return this.groupSignals.pristine();
+  }
+
+  public get pristines(): boolean {
+    return this.groupSignals.pristines();
+  }
+
+  public get touched(): boolean {
+    return this.groupSignals.touched();
+  }
+
+  public get toucheds(): boolean {
+    return this.groupSignals.toucheds();
+  }
+
+  public get untouched(): boolean {
+    return this.groupSignals.untouched();
+  }
+
+  public get untoucheds(): boolean {
+    return this.groupSignals.untoucheds();
+  }
+
+  public get valid(): boolean {
+    return this.groupSignals.valid();
+  }
+
+  public get invalid(): boolean {
+    return this.groupSignals.invalid();
+  }
+
+  public get errors(): ValidatorError[] {
+    return this.groupSignals.errors();
+  }
+
+  public get error(): ValidatorError | undefined {
+    return this.groupSignals.error();
+  }
+
+  public get wrong(): boolean {
+    return this.groupSignals.wrong();
+  }
+
+  public setValue(value: Partial<ControlsValue<C>>): void {
     Object.entries(value).forEach(([key, valueControl]) => {
-      const formControl = this._controls[key as keyof C];
-
-      formControl?.setValue(valueControl);
+      this.controlsState[key as keyof C]?.setValue(valueControl);
     });
+  }
+
+  public setValidators(validators?: ValidatorGroupFn<C>[]): void {
+    this.validatorsState.set(validators);
   }
 
   public reset(): void {
-    Object.values(this.controls).forEach((control) => {
+    Object.values(this.controlsState).forEach((control) => {
       control.reset();
     });
   }
-
-  public setValidators(validators: ValidatorGroupFn<C>[]): void {
-    this.validators.set(validators);
-  }
 }
 
-export function formGroup<C extends AngularFormControls = AngularFormControls>(
-  options: AngularFormGroupOptions<C>
+export function formGroup<C extends AngularControls = AngularControls>(
+  options: FormGroupOptions<C>
 ): FormGroup<C>;
-export function formGroup<C extends AngularFormControls = AngularFormControls>(
+export function formGroup<C extends AngularControls = AngularControls>(
   controls: C,
   validators?: ValidatorGroupFn<C>[]
 ): FormGroup<C>;
-export function formGroup<C extends AngularFormControls = AngularFormControls>(
-  options: AngularFormGroupOptions<C> | C,
+export function formGroup<C extends AngularControls = AngularControls>(
+  options: FormGroupOptions<C> | C,
   validators?: ValidatorGroupFn<C>[]
 ): FormGroup<C> {
-  return new FormGroup(createFormGroupOptions(options, validators));
+  return new FormGroup(
+    createFormGroupOptions<C, FormGroupOptions<C>>(options, validators)
+  );
 }

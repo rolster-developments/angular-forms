@@ -1,41 +1,18 @@
 import { Signal } from '@angular/core';
-import { ValidatorError, ValidatorResult } from '@rolster/validators';
 import {
-  AngularControl,
-  AngularFormControl
-} from '../form-control/form-control.type';
+  AbstractControls,
+  AbstractFormGroup,
+  ControlsValue,
+  ValidatorGroupFn
+} from '@rolster/forms';
+import { ValidatorError } from '@rolster/validators';
+import { AngularAbstractControl } from '../form-control/form-control.type';
 
-export type AngularFormControls<T extends AngularControl = AngularControl> =
-  AbstractAngularControls<T>;
+export type AngularControls<
+  T extends AngularAbstractControl = AngularAbstractControl
+> = AbstractControls<T>;
 
-export type AbstractAngularControls<
-  T extends AngularFormControl = AngularFormControl
-> = Record<string, T>;
-
-export type ValidatorGroupFn<
-  C extends AbstractAngularControls = AbstractAngularControls,
-  V = any
-> = (controls: C) => ValidatorResult<V>;
-
-export type AngularControlsSignal<C extends AbstractAngularControls> = {
-  [K in keyof C]: C[K]['signal'];
-};
-
-export type AngularControlsValue<C extends AbstractAngularControls> = {
-  [K in keyof C]: C[K]['value'];
-};
-
-export interface AngularFormGroupOptions<
-  C extends AbstractAngularControls = AbstractAngularControls
-> {
-  controls: C;
-  validators?: ValidatorGroupFn<C>[];
-}
-
-export interface AbstractAngularFormGroup<
-  C extends AbstractAngularControls = AbstractAngularControls
-> {
-  readonly controls: C;
+export interface GroupSignals<C extends AngularControls = AngularControls> {
   readonly dirties: Signal<boolean>;
   readonly dirty: Signal<boolean>;
   readonly error: Signal<ValidatorError | undefined>;
@@ -43,15 +20,19 @@ export interface AbstractAngularFormGroup<
   readonly invalid: Signal<boolean>;
   readonly pristine: Signal<boolean>;
   readonly pristines: Signal<boolean>;
-  reset: () => void;
-  setValidators: (validators: ValidatorGroupFn<C>[]) => void;
-  setValue(value: Partial<AngularControlsValue<C>>): void;
-  readonly signal: Signal<AngularControlsValue<C>>;
   readonly touched: Signal<boolean>;
   readonly toucheds: Signal<boolean>;
   readonly untouched: Signal<boolean>;
   readonly untoucheds: Signal<boolean>;
   readonly valid: Signal<boolean>;
-  readonly value: AngularControlsValue<C>;
+  readonly validators: Signal<ValidatorGroupFn<C>[] | undefined>;
+  readonly value: Signal<ControlsValue<C>>;
   readonly wrong: Signal<boolean>;
+}
+
+export interface AngularGroup<C extends AngularControls = AngularControls>
+  extends AbstractFormGroup<C> {
+  readonly signal: Signal<ControlsValue<C>>;
+  readonly signals: GroupSignals<C>;
+  readonly validators?: ValidatorGroupFn<C>[];
 }

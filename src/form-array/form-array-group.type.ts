@@ -1,42 +1,38 @@
+import { Signal } from '@angular/core';
 import {
-  AbstractAngularControls,
-  AbstractAngularFormGroup,
-  AngularFormGroupOptions
-} from '../form-group/form-group.type';
-import {
-  AbstractAngularArrayControl,
-  AngularArrayControl
-} from './form-array-control.type';
-
-export type AbstractAngularArrayControls<
-  T extends AbstractAngularArrayControl = AbstractAngularArrayControl
-> = AbstractAngularControls<T>;
+  AbstractArrayControls,
+  AbstractArrayGroup,
+  ArrayControlsValue,
+  FormArrayGroupOptions
+} from '@rolster/forms';
+import { GroupSignals } from '../form-group/form-group.type';
+import { AngularArrayControl } from './form-array-control.type';
 
 export type AngularArrayControls<
   T extends AngularArrayControl = AngularArrayControl
-> = AbstractAngularArrayControls<T>;
+> = AbstractArrayControls<T>;
 
-export type AngularArrayControlsSignal<C extends AbstractAngularArrayControls> =
-  {
-    [K in keyof C]: C[K]['signal'];
-  };
-
-export type AngularArrayControlsData<C extends AbstractAngularArrayControls> = {
-  [K in keyof C]: C[K]['value'];
-};
-
-export interface AngularFormArrayGroupOptions<
-  C extends AbstractAngularArrayControls = AbstractAngularArrayControls,
+export interface AngularArrayGroupOptions<
+  C extends AngularArrayControls = AngularArrayControls,
   R = any
-> extends AngularFormGroupOptions<C> {
-  uuid: string;
-  resource?: R;
+> extends Omit<FormArrayGroupOptions<C, R>, 'uuid'> {
+  uuid?: string;
 }
 
-export interface AbstractAngularArrayGroup<
-  C extends AbstractAngularArrayControls,
+export interface ArrayGroupSignals<
+  C extends AngularArrayControls = AngularArrayControls,
   R = any
-> extends AbstractAngularFormGroup<C> {
-  readonly uuid: string;
-  readonly resource?: R;
+> extends GroupSignals<C> {
+  readonly resource: Signal<R | undefined>;
+}
+
+export interface AngularArrayGroup<
+  C extends AngularArrayControls = AngularArrayControls,
+  R = any
+> extends AbstractArrayGroup<C, R> {
+  reset(): void;
+  setResource(resource: Undefined<R>): void;
+  setValue(value: Partial<ArrayControlsValue<C>>): void;
+  readonly signal: Signal<ArrayControlsValue<C>>;
+  readonly signals: ArrayGroupSignals<C, R>;
 }

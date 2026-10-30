@@ -1,114 +1,143 @@
-import { computed, Signal, signal, WritableSignal } from '@angular/core';
-import { formControlIsValid } from '@rolster/forms/helpers';
-import { ValidatorFn } from '@rolster/validators';
-import { v4 as uuid } from 'uuid';
-import { FormSignalControl } from '../form-control/form-signal-control';
+import { computed, signal, WritableSignal } from '@angular/core';
+import { ArrayControlsValue, ArrayListValueToControls } from '@rolster/forms';
 import {
   controlsToValue,
-  verifyAnyTrueInControls
-} from '../form-group/form-group.helper';
-import {
-  AngularArrayControls,
-  AngularArrayControlsData
-} from './form-array-group.type';
+  formControlIsValid,
+  verifyAllTrueInControls
+} from '@rolster/forms/helpers';
+import { v4 as uuid } from 'uuid';
+import { FormSignalControl } from '../form-control/form-signal-control';
+import { AngularArrayControls } from './form-array-group.type';
 import {
   AngularArrayList,
-  AngularArrayListValueToControls
+  AngularListOptions,
+  ArrayListSignals,
+  ArrayListValueToUuid
 } from './form-array-list.type';
 
 export class FormArrayList<
-    C extends AngularArrayControls = AngularArrayControls
+    C extends AngularArrayControls = AngularArrayControls,
+    E extends HTMLElement = HTMLElement
   >
-  extends FormSignalControl<AngularArrayControlsData<C>[]>
-  implements AngularArrayList<C>
+  extends FormSignalControl<ArrayControlsValue<C>[], E>
+  implements AngularArrayList<C, E>
 {
   public readonly uuid: string;
 
-  private controls$: WritableSignal<C[]>;
+  private readonly controlsState: WritableSignal<C[]>;
 
-  constructor(
-    private valueToControls: AngularArrayListValueToControls<C>,
-    value?: AngularArrayControlsData<C>[],
-    validators?: ValidatorFn<AngularArrayControlsData<C>[]>[]
-  ) {
-    const formArrayList = value || [];
+  private readonly controlsUuidState: WritableSignal<string[]>;
 
-    const focused = signal(false);
-    const disabled = signal(false);
+  private readonly listSignals: ArrayListSignals<C>;
 
-    const touched = computed(() =>
-      this.controls$().reduce(
-        (touched, controls) =>
-          touched || verifyAnyTrueInControls(controls, 'touched'),
-        false
-      )
+  private readonly valueToControls: ArrayListValueToControls<C>;
+
+  private readonly valueToUuid?: ArrayListValueToUuid<C>;
+
+  constructor(options: AngularListOptions<C>) {
+    const { valueToControls, valueToUuid } = options;
+
+    const defaultValue = options.value ?? [];
+
+    const controlsState = signal(defaultValue.map(valueToControls));
+    const controlsUuidState = signal(
+      defaultValue.map((value) => valueToUuid?.(value) ?? uuid())
     );
 
-    const dirty = computed(() =>
-      this.controls$().reduce(
-        (dirty, controls) =>
-          dirty || verifyAnyTrueInControls(controls, 'dirty'),
-        false
-      )
-    );
-
-    const valueSignal = computed(() => this.controls$().map(controlsToValue));
-    const validatorsSignal = signal(validators);
+    const validators = signal(options.validators);
+    const value = computed(() => controlsState().map(controlsToValue<C>));
 
     const errors = computed(() => {
-      const validators = validatorsSignal();
-      const value = valueSignal();
+      const listValidators = validators();
 
-      return validators ? formControlIsValid({ value, validators }) : [];
+      return listValidators
+        ? formControlIsValid({ value: value(), validators: listValidators })
+        : [];
     });
 
-    const valid = computed(() => errors().length === 0);
+    const valid = computed(
+      () =>
+        errors().length === 0 &&
+        controlsState().every((controls) =>
+          verifyAllTrueInControls(controls, 'valid')
+        )
+    );
 
-    super(formArrayList, {
-      dirty,
-      disabled,
-      enabled: computed(() => !disabled()),
-      error: computed(() => errors()[0]),
+    super(defaultValue, {
+      dirty: signal(false),
+      disabled: signal(false),
       errors,
-      focused,
-      invalid: computed(() => !valid()),
-      pristine: computed(() => !dirty()),
-      touched,
-      unfocused: computed(() => !focused()),
-      untouched: computed(() => !touched()),
+      focused: signal(false),
+      touched: signal(!!options.touched),
       valid,
-      validators: validatorsSignal,
-      value: valueSignal,
-      wrong: computed(() => touched() && !valid())
+      validators,
+      value
     });
 
     this.uuid = uuid();
-    this.controls$ = signal(formArrayList.map(valueToControls));
+    this.valueToControls = valueToControls;
+    this.valueToUuid = valueToUuid;
+    this.controlsState = controlsState;
+    this.controlsUuidState = controlsUuidState;
+
+    this.listSignals = {
+      ...this.controlSignals,
+      controls: controlsState.asReadonly(),
+      controlsUuid: controlsUuidState.asReadonly()
+    };
   }
 
-  public get controls(): Signal<C[]> {
-    return this.controls$;
+  public override get signals(): ArrayListSignals<C> {
+    return this.listSignals;
   }
 
-  public setValue(values: AngularArrayControlsData<C>[]): void {
-    this.controls$.set(values.map(this.valueToControls));
+  public get controls(): C[] {
+    return this.listSignals.controls();
+  }
+
+  public get controlsUuid(): string[] {
+    return this.listSignals.controlsUuid();
   }
 
   public push(controls: C): void {
-    this.controls$.set(this.controls$().concat([controls]));
+    const controlsUuid =
+      this.valueToUuid?.(controlsToValue<C>(controls)) ?? uuid();
+
+    this.controlsState.update((current) => [...current, controls]);
+    this.controlsUuidState.update((current) => [...current, controlsUuid]);
   }
 
   public remove(controls: C): void {
-    this.controls$.set(this.controls$().filter((item) => item !== controls));
+    const index = this.controlsState().indexOf(controls);
+
+    if (index < 0) {
+      return;
+    }
+
+    this.controlsState.update((current) =>
+      current.filter((_, position) => position !== index)
+    );
+    this.controlsUuidState.update((current) =>
+      current.filter((_, position) => position !== index)
+    );
+  }
+
+  public findControlsByUuid(uuid: string): Undefined<C> {
+    const index = this.controlsUuidState().indexOf(uuid);
+
+    return index >= 0 ? this.controlsState()[index] : undefined;
+  }
+
+  protected writeValue(value: ArrayControlsValue<C>[]): void {
+    this.controlsState.set(value.map(this.valueToControls));
+    this.controlsUuidState.set(
+      value.map((item) => this.valueToUuid?.(item) ?? uuid())
+    );
   }
 }
 
 export function formArrayList<
   C extends AngularArrayControls = AngularArrayControls
->(
-  valueToControl: AngularArrayListValueToControls<C>,
-  value?: AngularArrayControlsData<C>[],
-  validators?: ValidatorFn<AngularArrayControlsData<C>[]>[]
-): FormArrayList<C> {
-  return new FormArrayList(valueToControl, value, validators);
+>(options: AngularListOptions<C>): FormArrayList<C> {
+  return new FormArrayList<C, HTMLElement>(options);
 }
